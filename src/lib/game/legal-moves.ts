@@ -1,8 +1,14 @@
 import { gameBoard } from "../../main";
 import { getCoords, isLowerCase } from "../utilities";
-import { Piece, PieceByValue } from "../fen";
+import { PieceByValue } from "../fen";
 
 type PieceColor = 'w' | 'b';
+interface IEdges {
+  north: number;
+  south: number;
+  west: number;
+  east: number;
+}
 
 const directions = {
   north: -8,
@@ -32,6 +38,21 @@ export const moveNorth = (index: number, times: number = 1) => {
 
 export const moveSouth = (index: number, times: number = 1) => {
   return index + directions.south * times;
+}
+
+export const moveEast = (index: number, times: number = 1) => {
+  return index + directions.east * times;
+}
+
+export const moveWest = (index: number, times: number = 1) => {
+  return index + directions.west * times;
+}
+
+const move = {
+  north: moveNorth,
+  south: moveSouth,
+  east: moveEast,
+  west: moveWest
 }
 
 export const moveDiagonal = (index: number, direction: 'ne' | 'nw' | 'se' | 'sw', times: number = 1) => {
@@ -64,17 +85,47 @@ export const pawnFirstMove = (index: number, pieceColor: PieceColor) => {
 
 const outBoard = (index: number) => (index < 0 || index > 63);
 
-export const pawnLegalMoves = (pieceColor: PieceColor, index: number) => {
+const getCrossMoves = (
+  dir: 'north' | 'south' | 'west' | 'east',
+  pos: number,
+  times: number,
+  pieceColor: PieceColor
+) => {
+  const moveCb = move[dir]; // times ?= 7
+  const positions = [];
 
+  for (let mult = 1; mult <= times; mult++) {
+    const square = moveCb(pos, mult);
+    const hasRivalPiece = !isEmpty(square) && !hasFriendlyPiece(square, pieceColor);
+
+    if (isEmpty(square) || hasRivalPiece) positions.push(square);
+
+    if (!isEmpty(square)) break;
+  }
+
+  return positions;
+}
+const generateCross = (index: number, edges: IEdges, pieceColor: PieceColor) => {
+
+  return {
+    north: getCrossMoves('north', index, edges.north, pieceColor),
+    south: getCrossMoves('south', index, edges.south, pieceColor),
+    east: getCrossMoves('east', index, edges.east, pieceColor),
+    west: getCrossMoves('west', index, edges.west, pieceColor)
+  }
+
+}
+
+export const pawnLegalMoves = (pieceColor: PieceColor, index: number) => {
   const moves = {
     white: {
-      single: moveNorth(index),
-      double: moveNorth(index, 2),
+      single: move.north(index),
+      double: move.north(index, 2),
       diag: [moveDiagonal(index, 'ne'), moveDiagonal(index, 'nw')]
     },
     black: {
-      single: moveSouth(index),
-      double: moveSouth(index, 2),
+      single: move.south(index),
+      double: move.south(index, 2),
       diag: [moveDiagonal(index, 'se'), moveDiagonal(index, 'sw')]
     }
   }
@@ -97,8 +148,6 @@ export const pawnLegalMoves = (pieceColor: PieceColor, index: number) => {
     (isEmpty(double) && pawnFirstMove(index, pieceColor) && isEmpty(single)) && double
   ].filter(Boolean);
 
-  console.log('legal moves for pawn:', legalMoves, pieceColor);
-
   return legalMoves;
 
 }
@@ -106,4 +155,9 @@ export const pawnLegalMoves = (pieceColor: PieceColor, index: number) => {
 export const rookLegalMoves = (pieceColor: PieceColor, index: number) => {
 
   const edges = calculateEdgesDistance(index);
+
+  const { north, east, west, south } = generateCross(index, edges, pieceColor);
+
+  return [].concat(north, east, west, south)
+
 }
