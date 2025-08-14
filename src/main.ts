@@ -1,0 +1,158 @@
+
+import { Sprite } from "./lib/sprite.ts";
+import { PieceByValue } from "./lib/fen.ts";
+import { getCoords, isLowerCase } from "./lib/utilities.ts";
+import constants, { applyOffset } from "./lib/board/constants.ts";
+import { use } from "./lib/canvas.ts";
+import Board from "./lib/board/index.ts";
+import { hoveredSquare, legalMoves, mousePosition, previousIndex } from "./lib/mouse.ts";
+
+const { squareSize, boardSize, scale } = constants;
+
+const sources = {
+  wP: "assets/16x32/WhitePieces-Sheet.png",
+  bP: "assets/16x32/BlackPieces-Sheet.png",
+  bdP: "assets/boards/board_plain_01.png",
+  cr: "assets/128x128/cross.png",
+  sOv: "assets/72x72/square.png",
+}
+
+export const sheetInfo = {
+  p: {
+    sx: 0,
+    sy: 0,
+  },
+  n: {
+    sx: 16,
+    sy: 0,
+  },
+  r: {
+    sx: 32,
+    sy: 0,
+  },
+
+  b: {
+    sx: 48,
+    sy: 0,
+  },
+  q: {
+    sx: 64,
+    sy: 0,
+  },
+  k: {
+    sx: 80,
+    sy: 0,
+  },
+
+  P: {
+    sx: 0,
+    sy: 0,
+  },
+  N: {
+    sx: 16,
+    sy: 0,
+  },
+  R: {
+    sx: 32,
+    sy: 0,
+  },
+
+  B: {
+    sx: 48,
+    sy: 0,
+  },
+  Q: {
+    sx: 64,
+    sy: 0,
+  },
+  K: {
+    sx: 80,
+    sy: 0,
+  },
+}
+
+const boardSpr = new Sprite(sources.bdP, 0, 0, boardSize * scale, boardSize * scale);
+const wPieces = new Sprite(sources.wP, 0, 0, 16, 32);
+const bPieces = new Sprite(sources.bP, 0, 0, 16, 32);
+const square = new Sprite(sources.sOv, 0, 0, squareSize * 1.2, squareSize * 1.2);
+// export const gameBoard = new Board('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR');
+export const gameBoard = new Board('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR');
+
+
+export const drawLegalMoves = (legalMoves: number[]) => {
+  legalMoves.forEach(move => {
+    const { rankVal, file } = getCoords(move + 1);
+    let [x, y] = [applyOffset(rankVal), applyOffset(file - 1)];
+    use(ctx => {
+      ctx.beginPath();
+      ctx.arc(x, y, 25, -25, Math.PI);
+      ctx.fillStyle = "red";
+      ctx.fill();
+      ctx.closePath();
+    });
+  });
+}
+
+const drawHoveredSquare = () => {
+  const { sx, sy } = hoveredSquare;
+
+  if (!sx || !sy) return;
+
+  square.x = sx;
+  square.y = sy;
+  square.draw();
+}
+
+const drawPiece = (pieceId: number, indexPos: number) => {
+
+  const piece = PieceByValue[pieceId];
+  const pieceSheet = isLowerCase(piece) ? bPieces : wPieces;
+  const { sx, sy } = sheetInfo[piece];
+  const { rankVal, file } = getCoords(indexPos + 1);
+  let [x, y] = [applyOffset(rankVal - 1), applyOffset(file - 1)];
+  const [offsetX, offsetY] = [squareSize / 4, -(squareSize / 8)];
+
+  pieceSheet.drawSubSprite(
+    sx, sy,
+    16, 32,
+    x + offsetX,
+    y + offsetY,
+    squareSize / 2,
+    squareSize);
+
+}
+
+export const movePiece = (piece: string, prevPosition: number) => {
+  const { x, y } = mousePosition;
+  const pieceSheet = isLowerCase(piece) ? bPieces : wPieces;
+  const { sx, sy } = sheetInfo[piece];
+  const centerX = x - squareSize / 4;
+  const centerY = y - (squareSize / 4) * 2;
+
+  draw();
+  pieceSheet.drawSubSprite(sx, sy, 16, 32, centerX, centerY, squareSize / 2, squareSize);
+}
+
+export const draw = () => {
+  const board = gameBoard.getBoard();
+  use(ctx => {
+    ctx.clearRect(0, 0, 1008, 1008);
+    ctx.imageSmoothingEnabled = false;
+    boardSpr.draw();
+    board.forEach((el, indexPos) => {
+      if (el !== 0) drawPiece(el, indexPos);
+    });
+    drawHoveredSquare();
+    drawLegalMoves(legalMoves);
+  });
+}
+
+const main = async () => {
+
+  await Sprite.load();
+
+  draw();
+
+}
+
+main();
