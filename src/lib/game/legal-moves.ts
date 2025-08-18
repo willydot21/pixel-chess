@@ -1,6 +1,6 @@
 import { gameBoard } from "../../main";
 import { getCoords, isLowerCase } from "../utilities";
-import { PieceByValue } from "../fen";
+import { Piece, PieceByValue } from "../fen";
 
 type PieceColor = 'w' | 'b';
 interface IEdges {
@@ -8,6 +8,13 @@ interface IEdges {
   south: number;
   west: number;
   east: number;
+}
+
+interface IDiagEdges {
+  ne: number;
+  nw: number;
+  se: number;
+  sw: number;
 }
 
 const directions = {
@@ -24,6 +31,16 @@ export const calculateEdgesDistance = (index: number) => {
     south: 8 - file,
     west: rankVal - 1,
     east: 8 - rankVal
+  }
+}
+
+export const calculateDiagEdges = (index: number) => {
+  const { north, south, west, east } = calculateEdgesDistance(index);
+  return {
+    ne: Math.min(north, east),
+    nw: Math.min(north, west),
+    se: Math.min(south, east),
+    sw: Math.min(south, west)
   }
 }
 
@@ -92,7 +109,7 @@ const getCrossMoves = (
   pieceColor: PieceColor
 ) => {
   const moveCb = move[dir]; // times ?= 7
-  const positions = [];
+  const positions: number[] = [];
 
   for (let mult = 1; mult <= times; mult++) {
     const square = moveCb(pos, mult);
@@ -105,6 +122,37 @@ const getCrossMoves = (
 
   return positions;
 }
+
+const getCrossDiagonal = (
+  dir: 'ne' | 'nw' | 'se' | 'sw',
+  pos: number,
+  times: number,
+  pieceColor: PieceColor
+) => {
+
+  const positions: number[] = [];
+
+  for (let mult = 1; mult <= times; mult++) {
+    const square = moveDiagonal(pos, dir, mult);
+    const hasRivalPiece = !isEmpty(square) && !hasFriendlyPiece(square, pieceColor);
+
+    if (isEmpty(square) || hasRivalPiece) positions.push(square);
+
+    if (!isEmpty(square)) break;
+  }
+
+  return positions;
+}
+
+const generateDiagonalCross = (index: number, edges: IDiagEdges, pieceColor: PieceColor) => {
+  return {
+    ne: getCrossDiagonal('ne', index, edges.ne, pieceColor),
+    nw: getCrossDiagonal('nw', index, edges.nw, pieceColor),
+    se: getCrossDiagonal('se', index, edges.se, pieceColor),
+    sw: getCrossDiagonal('sw', index, edges.sw, pieceColor),
+  }
+}
+
 const generateCross = (index: number, edges: IEdges, pieceColor: PieceColor) => {
 
   return {
@@ -160,4 +208,13 @@ export const rookLegalMoves = (pieceColor: PieceColor, index: number) => {
 
   return [].concat(north, east, west, south)
 
+}
+
+export const bishopLegalMoves = (pieceColor: PieceColor, index: number) => {
+
+  const edges = calculateDiagEdges(index);
+
+  const { ne, nw, sw, se } = generateDiagonalCross(index, edges, pieceColor);
+
+  return [].concat(ne, nw, se, sw);
 }
