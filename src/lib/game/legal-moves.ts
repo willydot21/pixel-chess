@@ -1,8 +1,11 @@
 import { gameBoard } from "../../main";
 import { getCoords, isLowerCase } from "../utilities";
-import { Piece, PieceByValue } from "../fen";
+import { PieceByValue } from "../fen";
 
 type PieceColor = 'w' | 'b';
+
+type Direction = 'north' | 'east' | 'west' | 'south';
+
 interface IEdges {
   north: number;
   south: number;
@@ -16,6 +19,8 @@ interface IDiagEdges {
   se: number;
   sw: number;
 }
+
+type Move = [Direction, number];
 
 const directions = {
   north: -8,
@@ -44,10 +49,31 @@ export const calculateDiagEdges = (index: number) => {
   }
 }
 
-const hasDistance = (index: number, direction: 'west' | 'east' | 'north' | 'south') => {
-  return calculateEdgesDistance(index)[direction] > 0;
+const hasDistance = (index: number, direction: 'west' | 'east' | 'north' | 'south', edges?: IEdges) => {
+  if (!edges) edges = calculateEdgesDistance(index);
+  return edges[direction] > 0;
 }
 
+export const moveAlong = (index: number, moves: Move[], edges: IEdges) => {
+
+  let position = index;
+
+  const hasKnightDistance = (pos: number, dir: Direction, dist: number) => {
+    const edges = calculateEdgesDistance(pos);
+    return edges[dir] >= dist;
+  }
+
+  for (let [dir, times] of moves) {
+    if (hasKnightDistance(position, dir, times)) {
+      position = move[dir](position, times);
+    } else {
+      return null;
+    }
+  }
+
+  return position;
+
+}
 
 export const moveNorth = (index: number, times: number = 1) => {
   return index + directions.north * times;
@@ -217,4 +243,29 @@ export const bishopLegalMoves = (pieceColor: PieceColor, index: number) => {
   const { ne, nw, sw, se } = generateDiagonalCross(index, edges, pieceColor);
 
   return [].concat(ne, nw, se, sw);
+}
+
+export const knightLegalMoves = (pieceColor: PieceColor, index: number) => {
+
+  const edges = calculateEdgesDistance(index);
+
+  const moves: Move[][] = [
+    [['north', 1], ['east', 2]],
+    [['north', 2], ['east', 1]],
+    [['north', 1], ['west', 2]],
+    [['north', 2], ['west', 1]],
+    [['south', 1], ['east', 2]],
+    [['south', 2], ['east', 1]],
+    [['south', 1], ['west', 2]],
+    [['south', 2], ['west', 1]],
+  ];
+
+  const positions = moves.map(move => moveAlong(index, move, edges));
+
+  const pieceRules = (index: number) =>
+    !hasFriendlyPiece(index, pieceColor) &&
+    !outBoard(index) &&
+    index !== null;
+
+  return positions.filter(pieceRules);
 }

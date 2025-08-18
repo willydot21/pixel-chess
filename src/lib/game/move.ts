@@ -1,6 +1,6 @@
 import { selectedPiece, previousIndex } from "../mouse";
 import { isLowerCase } from "../utilities";
-import { bishopLegalMoves, pawnLegalMoves, rookLegalMoves } from "./legal-moves";
+import { bishopLegalMoves, knightLegalMoves, pawnLegalMoves, rookLegalMoves } from "./legal-moves";
 
 
 interface IMove {
@@ -27,7 +27,9 @@ export const getValidMoves = (piece: string = selectedPiece, { oldIndex = previo
     legalMoves = bishopLegalMoves(pieceColor, oldIndex);
   }
 
-
+  else if ('nN'.includes(piece)) {
+    legalMoves = knightLegalMoves(pieceColor, oldIndex);
+  }
 
   return legalMoves;
 }
