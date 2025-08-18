@@ -80,15 +80,18 @@ export const gameBoard = new Board('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBN
 
 
 export const drawLegalMoves = (legalMoves: number[]) => {
+  const fixSquare = (squareSize / 2);
   legalMoves.forEach(move => {
     const { rankVal, file } = getCoords(move + 1);
-    let [x, y] = [applyOffset(rankVal), applyOffset(file - 1)];
+    let [x, y] = [applyOffset(rankVal) - fixSquare, applyOffset(file - 1) + fixSquare];
     use(ctx => {
-      ctx.beginPath();
-      ctx.arc(x, y, 25, -25, Math.PI);
-      ctx.fillStyle = "red";
-      ctx.fill();
-      ctx.closePath();
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.shadowColor = "black";
+      ctx.shadowBlur = 10;
+      ctx.lineJoin = "bevel";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x - fixSquare, y - fixSquare, squareSize, squareSize);
+      ctx.shadowBlur = 0;
     });
   });
 }
