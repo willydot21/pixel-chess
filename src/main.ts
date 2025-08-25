@@ -4,8 +4,8 @@ import { PieceByValue } from "./lib/fen.ts";
 import { getCoords, isLowerCase } from "./lib/utilities.ts";
 import constants, { applyOffset } from "./lib/board/constants.ts";
 import { use } from "./lib/canvas.ts";
-import Board from "./lib/board/index.ts";
-import { hoveredSquare, legalMoves, mousePosition, previousIndex } from "./lib/mouse.ts";
+import { hoveredSquare, mousePosition } from "./lib/mouse.ts";
+import { GameController } from "./lib/game/controller.ts";
 
 const { squareSize, boardSize, scale } = constants;
 
@@ -75,9 +75,7 @@ const boardSpr = new Sprite(sources.bdP, 0, 0, boardSize * scale, boardSize * sc
 const wPieces = new Sprite(sources.wP, 0, 0, 16, 32);
 const bPieces = new Sprite(sources.bP, 0, 0, 16, 32);
 const square = new Sprite(sources.sOv, 0, 0, squareSize * 1.2, squareSize * 1.2);
-// export const gameBoard = new Board('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR');
-export const gameBoard = new Board('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR');
-
+export const gameController = new GameController();
 
 export const drawLegalMoves = (legalMoves: number[]) => {
   const fixSquare = (squareSize / 2);
@@ -125,7 +123,7 @@ const drawPiece = (pieceId: number, indexPos: number) => {
 
 }
 
-export const movePiece = (piece: string, prevPosition: number) => {
+export const movePiece = ({ piece }: { piece: string, position: number }) => {
   const { x, y } = mousePosition;
   const pieceSheet = isLowerCase(piece) ? bPieces : wPieces;
   const { sx, sy } = sheetInfo[piece];
@@ -137,7 +135,7 @@ export const movePiece = (piece: string, prevPosition: number) => {
 }
 
 export const draw = () => {
-  const board = gameBoard.getBoard();
+  const board = gameController.getBoard();
   use(ctx => {
     ctx.clearRect(0, 0, 1008, 1008);
     ctx.imageSmoothingEnabled = false;
@@ -146,7 +144,7 @@ export const draw = () => {
       if (el !== 0) drawPiece(el, indexPos);
     });
     drawHoveredSquare();
-    drawLegalMoves(legalMoves);
+    drawLegalMoves(gameController.getLegalMoves() || []);
   });
 }
 

@@ -1,6 +1,7 @@
-import { gameBoard } from "../../main";
+
 import { getCoords, isLowerCase } from "../utilities";
 import { PieceByValue } from "../fen";
+import { gameController } from "../../main";
 
 type PieceColor = 'w' | 'b';
 
@@ -105,11 +106,11 @@ export const moveDiagonal = (index: number, direction: 'ne' | 'nw' | 'se' | 'sw'
 }
 
 export const isEmpty = (index: number) => {
-  return gameBoard.getBoard()[index] === 0;
+  return gameController.getBoard()[index] === 0;
 }
 
 export const hasFriendlyPiece = (index: number, pieceColor: PieceColor) => {
-  const target = PieceByValue[gameBoard.getBoard()[index]];
+  const target = PieceByValue[gameController.getBoard()[index]];
 
   if (!target) return;
 
@@ -232,7 +233,7 @@ export const rookLegalMoves = (pieceColor: PieceColor, index: number) => {
 
   const { north, east, west, south } = generateCross(index, edges, pieceColor);
 
-  return [].concat(north, east, west, south)
+  return [].concat(north, east, west, south);
 
 }
 

@@ -1,19 +1,16 @@
-import { selectedPiece, previousIndex } from "../mouse";
+
 import { isLowerCase } from "../utilities";
 import { bishopLegalMoves, kingLegalMoves, knightLegalMoves, pawnLegalMoves, queenLegalMoves, rookLegalMoves } from "./legal-moves";
 
-
-interface IMove {
-  oldIndex: number;
-  newIndex: number;
+interface IPieceInfo {
+  piece: string;
+  position: number;
 }
 
-export const getValidMoves = (piece: string = selectedPiece, { oldIndex = previousIndex, newIndex }: IMove) => {
+export const getValidMoves = ({ piece, position: oldIndex }: IPieceInfo) => {
 
   const pieceColor = isLowerCase(piece) ? 'b' : 'w';
   let legalMoves: number[];
-
-  console.log(oldIndex, newIndex);
 
   if ('pP'.includes(piece)) {
     legalMoves = pawnLegalMoves(pieceColor, oldIndex);
@@ -37,7 +34,6 @@ export const getValidMoves = (piece: string = selectedPiece, { oldIndex = previo
 
   else {
     legalMoves = kingLegalMoves(pieceColor, oldIndex);
-    console.log(legalMoves);
   }
 
   return legalMoves;
