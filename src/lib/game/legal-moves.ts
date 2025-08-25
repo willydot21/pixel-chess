@@ -269,3 +269,24 @@ export const knightLegalMoves = (pieceColor: PieceColor, index: number) => {
 
   return positions.filter(pieceRules);
 }
+
+export const queenLegalMoves = (pieceColor: PieceColor, index: number) => {
+  const edges = calculateEdgesDistance(index);
+  const diagEdges = calculateDiagEdges(index);
+
+  const { north, east, west, south } = generateCross(index, edges, pieceColor);
+  const { ne, nw, se, sw } = generateDiagonalCross(index, diagEdges, pieceColor);
+
+  return [].concat(north, east, west, south, ne, nw, se, sw);
+}
+
+export const kingLegalMoves = (pieceColor: PieceColor, index: number) => {
+  const edges = calculateEdgesDistance(index);
+  const diagEdges = calculateDiagEdges(index);
+
+  const { north, east, west, south } = generateCross(index, edges, pieceColor);
+  const { ne, nw, se, sw } = generateDiagonalCross(index, diagEdges, pieceColor);
+  const moves = [north, east, west, south, ne, nw, se, sw].map(move => move[0]).filter(Number);
+
+  return moves;
+}
