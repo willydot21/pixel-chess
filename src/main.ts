@@ -2,12 +2,12 @@
 import { Sprite } from "./lib/sprite.ts";
 import { PieceByValue } from "./lib/fen.ts";
 import { getCoords, isLowerCase } from "./lib/utilities.ts";
-import constants, { applyOffset } from "./lib/board/constants.ts";
-import { use } from "./lib/canvas.ts";
+import constants, { applyOffset, updateConstants, } from "./lib/board/constants.ts";
+import { canvas, use } from "./lib/canvas.ts";
 import { hoveredSquare, mousePosition } from "./lib/mouse.ts";
 import { GameController } from "./lib/game/controller.ts";
 
-const { squareSize, boardSize, scale } = constants;
+const { squareSize, boardSize, scale, borderOff, borderOffPercent, offset } = updateConstants();
 
 const sources = {
   wP: "assets/16x32/WhitePieces-Sheet.png",
@@ -149,6 +149,11 @@ export const draw = () => {
 }
 
 const main = async () => {
+
+  window.onresize = () => {
+    const { boardSize, offset } = updateConstants();
+    //console.log(boardSize);
+  }
 
   await Sprite.load();
 

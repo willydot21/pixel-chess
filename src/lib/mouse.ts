@@ -1,12 +1,11 @@
 
 import { draw, movePiece, gameController } from "../main";
-import constants, { applyOffset, aproximateValue, mouseOnBoard } from "./board/constants";
+import constants, { applyOffset, aproximateValue, mouseOnBoard, updateConstants } from "./board/constants";
 import { canvas } from "./canvas";
 import { ReverseRank } from "./utilities";
 
 export interface HoveredSquare { sx?: number, sy?: number, rank?: string, file?: number }
 
-const { offset } = constants;
 export var mousePosition = { x: null, y: null };
 export var hoveredSquare: HoveredSquare = {
   rank: null, file: null, sx: null, sy: null
@@ -16,24 +15,33 @@ export var hoveredSquare: HoveredSquare = {
 const updateMousePosition = (e: MouseEvent) => {
   if (!e.target) return;
 
+
+
   const rect = (e.target as HTMLElement).getBoundingClientRect();
   // NOTE! currentTarget != target.
 
+
+  const canvasRect = canvas.getBoundingClientRect(); // Get canvas position and size relative to the viewport
+  const scaleX = canvas.width / canvasRect.width;    // Calculate the horizontal scale factor
+  const scaleY = canvas.height / canvasRect.height;  // Calculate the vertical scale factor
+
+  //console.log(canvasRect.width, canvas.width)
+
   mousePosition = {
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY
   }
 
   return mousePosition;
 }
 
 const updateHoveredSquare = (e: MouseEvent) => {
-
+  e.preventDefault();
   const { x, y } = updateMousePosition(e);
   if (mouseOnBoard(x, y)) {
     const scaleOffset = -8;
-    const rankVal = aproximateValue(x - offset);
-    const file = aproximateValue(y - offset) - 1;
+    const rankVal = aproximateValue(x);
+    const file = aproximateValue(y) - 1;
     const sx = applyOffset(rankVal - 1) + scaleOffset;
     const sy = applyOffset(file) + scaleOffset;
     hoveredSquare = {
