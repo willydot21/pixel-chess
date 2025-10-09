@@ -1,6 +1,6 @@
 
 import { draw, movePiece, gameController } from "../main";
-import constants, { applyOffset, aproximateValue, mouseOnBoard, updateConstants } from "./board/constants";
+import { applyOffset, aproximateValue, mouseOnBoard, updateConstants } from "./board/constants";
 import { canvas } from "./canvas";
 import { ReverseRank } from "./utilities";
 
@@ -39,7 +39,7 @@ const updateHoveredSquare = (e: MouseEvent) => {
   e.preventDefault();
   const { x, y } = updateMousePosition(e);
   if (mouseOnBoard(x, y)) {
-    const scaleOffset = -8;
+    const scaleOffset = -3.4;
     const rankVal = aproximateValue(x);
     const file = aproximateValue(y) - 1;
     const sx = applyOffset(rankVal - 1) + scaleOffset;

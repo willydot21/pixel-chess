@@ -83,11 +83,10 @@ export const drawLegalMoves = (legalMoves: number[]) => {
     const { rankVal, file } = getCoords(move + 1);
     let [x, y] = [applyOffset(rankVal) - fixSquare, applyOffset(file - 1) + fixSquare];
     use(ctx => {
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
       ctx.shadowColor = "black";
-      ctx.shadowBlur = 10;
       ctx.lineJoin = "bevel";
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 1.3;
       ctx.strokeRect(x - fixSquare, y - fixSquare, squareSize, squareSize);
       ctx.shadowBlur = 0;
     });

@@ -14,6 +14,7 @@ export const updateConstants = () => {
   borderOff = boardSize * borderOffPercent;
   fixBoardSize = (boardSize - borderOff) * scale;
   squareSize = (fixBoardSize / 8);
+
   offset = (borderOff / 2) * scale;
   return { boardSize, borderOff, borderOffPercent, fixBoardSize, squareSize, scale, offset };
 }
@@ -30,11 +31,9 @@ export const aproximateValue = (n: number) => {
   return divRest === 0 ? div : div + 1;
 }
 export const mouseOnBoard = (x: number, y: number) => {
-  const canvasRect = canvas.getBoundingClientRect();
-  const scaleFactor = canvas.width / canvasRect.width;
-  const offset = (canvas.width * (borderOffPercent));
-  console.log(x)
-  const boardWithOffset = (width - offset);
+  const cvWidth = canvas.width;
+  const offset = (cvWidth * (borderOffPercent));
+  const boardWithOffset = (cvWidth - (offset / 2));
   const xInBoard = (x > offset) && (x < boardWithOffset);
   const yInBoard = (y > offset) && (y < boardWithOffset);
   return xInBoard && yInBoard;
