@@ -300,14 +300,16 @@ export const getRivalPieces = (rivalColor: PieceColor) => {
 export const isKingInCheck = (pieceColor: PieceColor, index: number) => {
   const rivalColor = pieceColor === 'w' ? 'b' : 'w';
   const rivalPieces = getRivalPieces(rivalColor);
-  for (let { piece, position } of rivalPieces) {
-    const legalMoves = wrapLegalMoves(piece, position, rivalColor);
-    if (legalMoves.includes(index)) return true;
-  }
-  return false;
+  return gameController.simulateMove(index, () => {
+    for (let { piece, position } of rivalPieces) {
+      const legalMoves = wrapLegalMoves(piece, position, rivalColor);
+      if (legalMoves.includes(index)) return true;
+    }
+    return false;
+  });
 }
 
-// ALTERNATIVE TO isKingCheck FUNCTION
+// CHECK FUNCTION
 export const rivalKingCheck = (pieceColor: PieceColor, legalMoves: number[]) => {
   const board = gameController.getBoard();
   console.log('Checking for king in moves:', legalMoves);

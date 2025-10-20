@@ -1,7 +1,7 @@
 
 // type LeIdentifier = `${'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h'}${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8}`;
 
-import { genFromFen, Piece } from "../fen";
+import { genFromFen, Piece, PieceByValue } from "../fen";
 
 
 class BoardState {
@@ -53,6 +53,12 @@ export default class Board extends BoardState {
 
   public popIndex(ind: number) {
     this.board[ind] = 0;
+  }
+
+  getPieceAt(ind: number) {
+    const pieceValue = this.board[ind];
+    if (!pieceValue) return null;
+    return PieceByValue[pieceValue] || null;
   }
 
   public reverseMap() { return [...this.board].reverse(); }

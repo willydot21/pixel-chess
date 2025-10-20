@@ -1,3 +1,4 @@
+import { draw } from "../../main";
 import Board from "../board";
 import { PieceByValue } from "../fen";
 import type { HoveredSquare } from "../mouse";
@@ -19,7 +20,7 @@ export class GameController {
   public draggin = false;
   public check: 'w' | 'b' = null;
   //public board: Board = new Board('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR');
-  public board: Board = new Board('8/8/8/8/8/8/6N1/7k');
+  public board: Board = new Board('8/8/8/8/8/8/7p/7K');
   constructor() {
   }
 
@@ -79,6 +80,22 @@ export class GameController {
       this.draggin = false;
       this.changeTurn();
     }
+  }
+
+  public simulateMove(newPosition: number, cb: any) {
+    if (!this.selectedPiece) return;
+    const oldPiece = this.board.getPieceAt(newPosition);
+    this.board.popIndex(this.selectedPiece.position);
+    this.board.movePiece(this.selectedPiece.piece, newPosition);
+    const result = cb();
+    this.board.popIndex(newPosition);
+    this.board.movePiece(this.selectedPiece.piece, this.selectedPiece.position);
+    if (oldPiece) {
+      this.board.movePiece(oldPiece ? oldPiece : 0, newPosition);
+    } else {
+      this.board.popIndex(newPosition);
+    }
+    return result;
   }
 
   public cancelMove() {
