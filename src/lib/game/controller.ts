@@ -1,7 +1,9 @@
 import Board from "../board";
 import { PieceByValue } from "../fen";
 import type { HoveredSquare } from "../mouse";
-import { normalizeUInd, Rank } from "../utilities";
+import { updateStatusText, updateTurnText } from "../ui";
+import { isLowerCase, normalizeUInd, Rank } from "../utilities";
+import { filterSafeMoves, rivalKingCheck, wrapLegalMoves } from "./legal-moves";
 import { getValidMoves } from "./move";
 
 interface IPieceInfo {
@@ -15,8 +17,9 @@ export class GameController {
   private moveLog = [];
   public selectedPiece: IPieceInfo | null = null;
   public draggin = false;
-  public board: Board = new Board('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR');
-
+  public check: 'w' | 'b' = null;
+  //public board: Board = new Board('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR');
+  public board: Board = new Board('8/8/8/8/8/8/6N1/7k');
   constructor() {
   }
 
@@ -24,6 +27,7 @@ export class GameController {
 
   public changeTurn() {
     this.turn = this.turn === 'w' ? 'b' : 'w';
+    updateTurnText(`${this.turn === 'w' ? "White's" : "Black's"} Turn`);
   }
 
   public selectPiece(square: HoveredSquare) {
@@ -46,14 +50,29 @@ export class GameController {
     return pieceColor === this.turn;
   }
 
+  public updateCheck(newPosition: number) {
+    const rivalColor = this.turn === 'w' ? 'b' : 'w';
+    const legalMoves = wrapLegalMoves(this.selectedPiece.piece, newPosition, this.turn);
+    const inCheck = rivalKingCheck(this.turn, legalMoves);
+    this.check = inCheck ? rivalColor : null;
+    console.log('Check Status:', inCheck);
+    if (this.check) {
+      updateStatusText(`${this.check === 'w' ? "White" : "Black"} is in Check!`);
+    } else {
+      updateStatusText(``);
+    }
+  }
+
   public dropPiece(square: HoveredSquare) {
     if (!this.selectedPiece) return;
     const { rank, file } = square;
     const newPosition = normalizeUInd({ rank: Rank[rank], file }) - 1;
+    const legalMoves = this.getLegalMoves();
 
-    if (!this.getLegalMoves().includes(newPosition)) {
+    if (!legalMoves.includes(newPosition)) {
       this.cancelMove();
     } else {
+      this.updateCheck(newPosition);
       this.board.popIndex(this.selectedPiece.position);
       this.board.movePiece(this.selectedPiece.piece, newPosition);
       this.selectedPiece = null;
@@ -69,8 +88,12 @@ export class GameController {
   }
 
   public getLegalMoves() {
+
     if (!this.selectedPiece || !this.isPieceTurn()) return [];
-    return getValidMoves(this.selectedPiece);
+    const legalMoves = getValidMoves(this.selectedPiece);
+
+    return legalMoves;
+
   }
 
   public logMove(oldIndex: number, newIndex: number) {

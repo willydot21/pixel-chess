@@ -5,7 +5,6 @@ export const { $, $$ } = {
   $$: (selector: string) => document.querySelectorAll(selector)
 }
 
-
 const statusText = $('#status') as HTMLSpanElement;
 export const updateStatusText = (text: string) => {
   statusText.textContent = text;

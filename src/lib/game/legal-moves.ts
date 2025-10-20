@@ -1,7 +1,8 @@
 
 import { getCoords, isLowerCase } from "../utilities";
-import { PieceByValue } from "../fen";
+import { Piece, PieceByValue } from "../fen";
 import { gameController } from "../../main";
+import { getValidMoves } from "./move";
 
 type PieceColor = 'w' | 'b';
 
@@ -281,6 +282,46 @@ export const queenLegalMoves = (pieceColor: PieceColor, index: number) => {
   return [].concat(north, east, west, south, ne, nw, se, sw);
 }
 
+export const getRivalPieces = (rivalColor: PieceColor) => {
+  const board = gameController.getBoard();
+  const pieces = [] as { piece: string, position: number }[];
+  for (let i = 0; i < 64; i++) {
+    const square = board[i];
+    if (!square) continue;
+    const piece = PieceByValue[square] as string;
+    const pieceColor = isLowerCase(piece) ? 'b' : 'w';
+    if (piece && pieceColor === rivalColor) {
+      pieces.push({ piece, position: i });
+    }
+  }
+  return pieces;
+}
+
+export const isKingInCheck = (pieceColor: PieceColor, index: number) => {
+  const rivalColor = pieceColor === 'w' ? 'b' : 'w';
+  const rivalPieces = getRivalPieces(rivalColor);
+  for (let { piece, position } of rivalPieces) {
+    const legalMoves = wrapLegalMoves(piece, position, rivalColor);
+    if (legalMoves.includes(index)) return true;
+  }
+  return false;
+}
+
+// ALTERNATIVE TO isKingCheck FUNCTION
+export const rivalKingCheck = (pieceColor: PieceColor, legalMoves: number[]) => {
+  const board = gameController.getBoard();
+  console.log('Checking for king in moves:', legalMoves);
+  const rivalColor = pieceColor === 'w' ? 'b' : 'w';
+  const kingPiece = rivalColor === 'w' ? 'K' : 'k';
+  for (let move of legalMoves) {
+    const targetPiece = PieceByValue[board[move]];
+    if (targetPiece && (targetPiece === kingPiece)) {
+      return true
+    }
+  }
+  return false;
+}
+
 export const kingLegalMoves = (pieceColor: PieceColor, index: number) => {
   const edges = calculateEdgesDistance(index);
   const diagEdges = calculateDiagEdges(index);
@@ -289,5 +330,22 @@ export const kingLegalMoves = (pieceColor: PieceColor, index: number) => {
   const { ne, nw, se, sw } = generateDiagonalCross(index, diagEdges, pieceColor);
   const moves = [north, east, west, south, ne, nw, se, sw].map(move => move[0]).filter(Number);
 
-  return moves;
+  return filterSafeMoves(pieceColor, moves);
+}
+
+export const wrapLegalMoves = (piece: string, index: number, pieceColor: PieceColor) => {
+  const legalDict = {
+    p: pawnLegalMoves,
+    r: rookLegalMoves,
+    b: bishopLegalMoves,
+    n: knightLegalMoves,
+    q: queenLegalMoves,
+    k: kingLegalMoves
+  }
+
+  return legalDict[piece.toLowerCase()](pieceColor, index);
+}
+
+export const filterSafeMoves = (pieceColor: PieceColor, legalMoves: number[]) => {
+  return legalMoves.filter(move => isKingInCheck(pieceColor, move) === false)
 }
