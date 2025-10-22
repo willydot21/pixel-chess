@@ -94,7 +94,7 @@ export class GameController {
       this.board.movePiece(oldPiece ? oldPiece : 0, newPosition);
     } else {
       this.board.popIndex(newPosition);
-    }
+    } // REMOVE GHOST PIECE
     return result;
   }
 
