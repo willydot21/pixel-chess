@@ -55,10 +55,14 @@ export default class Board extends BoardState {
     this.board[ind] = 0;
   }
 
-  getPieceAt(ind: number) {
+  public getPieceAt(ind: number) {
     const pieceValue = this.board[ind];
     if (!pieceValue) return null;
     return PieceByValue[pieceValue] || null;
+  }
+
+  public getIndexById(id: number) {
+    return this.board.indexOf(id);
   }
 
   public reverseMap() { return [...this.board].reverse(); }

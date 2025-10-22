@@ -4,7 +4,7 @@ import { PieceByValue } from "../fen";
 import type { HoveredSquare } from "../mouse";
 import { updateStatusText, updateTurnText } from "../ui";
 import { isLowerCase, normalizeUInd, Rank } from "../utilities";
-import { filterSafeMoves, rivalKingCheck, wrapLegalMoves } from "./legal-moves";
+import { filterSafeMoves, isKingInCheck, rivalKingCheck, wrapLegalMoves } from "./legal-moves";
 import { getValidMoves } from "./move";
 
 interface IPieceInfo {
@@ -14,21 +14,62 @@ interface IPieceInfo {
 
 export class GameController {
 
-  private turn: 'w' | 'b' = 'w';
+  private turn: 'w' | 'b' = 'b';
   private moveLog = [];
   public selectedPiece: IPieceInfo | null = null;
   public draggin = false;
   public check: 'w' | 'b' = null;
-  //public board: Board = new Board('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR');
-  public board: Board = new Board('8/8/8/8/8/8/7p/7K');
+  public checkMate: 'w' | 'b' = null;
+  public board: Board = new Board('6k1/6Q1/6K1/8/8/8/8/8');
+  // public board: Board = new Board('8/8/8/8/8/8/7p/7K');
   constructor() {
   }
 
   public getTurn() { return this.turn; }
 
+  public checkState() {
+    const rivalColor = this.turn === 'w' ? 'b' : 'w'
+    const selfKing = isKingInCheck(this.turn);
+    const opponent = isKingInCheck(this.turn === 'w' ? 'b' : 'w');
+
+    if (!(selfKing || opponent)) return;
+
+    this.check = selfKing ? this.turn : rivalColor;
+
+    const bKMoves = filterSafeMoves(
+      'b',
+      getValidMoves({ piece: 'k', position: this.board.getIndexById(-6) })
+    );
+    const wMoves = filterSafeMoves(
+      'w',
+      getValidMoves({ piece: 'K', position: this.board.getIndexById(6) })
+    );
+
+    if (bKMoves && wMoves) return;
+
+    this.checkMate = !bKMoves ? 'w' : 'b';
+
+  }
+
+  public init() {
+    this.checkState();
+    this.updateBoardInfo();
+  }
+
   public changeTurn() {
     this.turn = this.turn === 'w' ? 'b' : 'w';
     updateTurnText(`${this.turn === 'w' ? "White's" : "Black's"} Turn`);
+  }
+
+  public updateBoardInfo() {
+    if (this.checkMate !== null) {
+      updateStatusText(`${this.checkMate === 'w' ? "Black" : "White"} is in Checkmate!`);
+    }
+    if (this.check) {
+      updateStatusText(`${this.check === 'w' ? "White" : "Black"} is in Check!`);
+    } else {
+      updateStatusText(``);
+    }
   }
 
   public selectPiece(square: HoveredSquare) {
@@ -56,12 +97,7 @@ export class GameController {
     const legalMoves = wrapLegalMoves(this.selectedPiece.piece, newPosition, this.turn);
     const inCheck = rivalKingCheck(this.turn, legalMoves);
     this.check = inCheck ? rivalColor : null;
-    console.log('Check Status:', inCheck);
-    if (this.check) {
-      updateStatusText(`${this.check === 'w' ? "White" : "Black"} is in Check!`);
-    } else {
-      updateStatusText(``);
-    }
+    this.updateBoardInfo();
   }
 
   public dropPiece(square: HoveredSquare) {
@@ -91,7 +127,7 @@ export class GameController {
     this.board.popIndex(newPosition);
     this.board.movePiece(this.selectedPiece.piece, this.selectedPiece.position);
     if (oldPiece) {
-      this.board.movePiece(oldPiece ? oldPiece : 0, newPosition);
+      this.board.movePiece(oldPiece, newPosition);
     } else {
       this.board.popIndex(newPosition);
     } // REMOVE GHOST PIECE
@@ -108,6 +144,10 @@ export class GameController {
 
     if (!this.selectedPiece || !this.isPieceTurn()) return [];
     const legalMoves = getValidMoves(this.selectedPiece);
+    if ((legalMoves.length === 0) && (this.selectedPiece.piece.toLowerCase()) === 'k') {
+      this.checkMate = this.turn === 'w' ? 'b' : 'w';
+      this.updateBoardInfo();
+    }
 
     return legalMoves;
 

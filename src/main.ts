@@ -134,6 +134,7 @@ export const movePiece = ({ piece }: { piece: string, position: number }) => {
 }
 
 export const draw = () => {
+  const legalMoves = gameController.getLegalMoves() || [];
   const board = gameController.getBoard();
   use(ctx => {
     ctx.clearRect(0, 0, 1008, 1008);
@@ -143,7 +144,7 @@ export const draw = () => {
       if (el !== 0) drawPiece(el, indexPos);
     });
     drawHoveredSquare();
-    drawLegalMoves(gameController.getLegalMoves() || []);
+    drawLegalMoves(legalMoves);
   });
 }
 
@@ -155,6 +156,8 @@ const main = async () => {
   }
 
   await Sprite.load();
+
+  gameController.init();
 
   draw();
 
