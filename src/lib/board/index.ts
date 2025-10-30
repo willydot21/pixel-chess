@@ -2,6 +2,8 @@
 // type LeIdentifier = `${'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h'}${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8}`;
 
 import { genFromFen, Piece, PieceByValue } from "../fen";
+import type { IPieceInfo } from "../types";
+import { isLowerCase } from "../utilities";
 
 
 class BoardState {
@@ -47,6 +49,22 @@ export default class Board extends BoardState {
     // change it
   }
 
+  public simulateMove(piece: IPieceInfo, newPosition: number, cb: any) {
+
+    const { position, piece: pieceType } = piece;
+    const oldPiece = this.getPieceAt(newPosition);
+
+    this.popIndex(position);
+    this.movePiece(pieceType, newPosition);
+    const result = cb();
+    this.popIndex(newPosition);
+    this.movePiece(pieceType, position);
+    if (oldPiece) {
+      this.movePiece(oldPiece, newPosition);
+    }
+    return result;
+  }
+
   public movePiece(piece: string, ind: number) {
     this.board[ind] = Piece[piece];
   }
@@ -59,6 +77,13 @@ export default class Board extends BoardState {
     const pieceValue = this.board[ind];
     if (!pieceValue) return null;
     return PieceByValue[pieceValue] || null;
+  }
+
+  public getKing(color: 'b' | 'w'): IPieceInfo {
+    const id = color === 'b' ? -6 : 6;
+    const piece = PieceByValue[id];
+    const index = this.getIndexById(id);
+    return { piece, position: index, pieceColor: color };
   }
 
   public getIndexById(id: number) {

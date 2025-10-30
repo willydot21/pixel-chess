@@ -2,15 +2,11 @@ import { draw } from "../../main";
 import Board from "../board";
 import { PieceByValue } from "../fen";
 import type { HoveredSquare } from "../mouse";
+import type { IPieceInfo } from "../types";
 import { updateStatusText, updateTurnText } from "../ui";
 import { isLowerCase, normalizeUInd, Rank } from "../utilities";
-import { filterSafeMoves, isKingInCheck, rivalKingCheck, wrapLegalMoves } from "./legal-moves";
+import { forcedMate, isKingInCheck } from "./legal-moves";
 import { getValidMoves } from "./move";
-
-interface IPieceInfo {
-  piece: string;
-  position: number;
-}
 
 export class GameController {
 
@@ -20,8 +16,10 @@ export class GameController {
   public draggin = false;
   public check: 'w' | 'b' = null;
   public checkMate: 'w' | 'b' = null;
-  public board: Board = new Board('6k1/6Q1/6K1/8/8/8/8/8');
-  // public board: Board = new Board('8/8/8/8/8/8/7p/7K');
+  private legalMoves: number[] = [];
+  //public board: Board = new Board();
+  public playStatus: 'playing' | 'finished' = 'playing';
+  public board: Board = new Board('8/8/8/8/8/6k2/7p/7K');
   constructor() {
   }
 
@@ -30,24 +28,24 @@ export class GameController {
   public checkState() {
     const rivalColor = this.turn === 'w' ? 'b' : 'w'
     const selfKing = isKingInCheck(this.turn);
-    const opponent = isKingInCheck(this.turn === 'w' ? 'b' : 'w');
+    const opponent = isKingInCheck(rivalColor);
 
-    if (!(selfKing || opponent)) return;
+    if (!selfKing && !opponent) {
+      this.check = null;
+    } else {
+      this.check = selfKing ? this.turn : rivalColor;
+    }
 
-    this.check = selfKing ? this.turn : rivalColor;
+    const mateSelf = forcedMate(this.turn);
+    const mateRival = forcedMate(rivalColor);
 
-    const bKMoves = filterSafeMoves(
-      'b',
-      getValidMoves({ piece: 'k', position: this.board.getIndexById(-6) })
-    );
-    const wMoves = filterSafeMoves(
-      'w',
-      getValidMoves({ piece: 'K', position: this.board.getIndexById(6) })
-    );
+    if (!mateSelf && !mateRival) {
+      this.checkMate = null;
+      return;
+    }
 
-    if (bKMoves && wMoves) return;
-
-    this.checkMate = !bKMoves ? 'w' : 'b';
+    this.checkMate = selfKing ? this.turn : rivalColor;
+    this.playStatus = 'finished';
 
   }
 
@@ -58,14 +56,17 @@ export class GameController {
 
   public changeTurn() {
     this.turn = this.turn === 'w' ? 'b' : 'w';
-    updateTurnText(`${this.turn === 'w' ? "White's" : "Black's"} Turn`);
+    this.checkState();
+    this.updateBoardInfo();
+    draw();
   }
 
   public updateBoardInfo() {
-    if (this.checkMate !== null) {
-      updateStatusText(`${this.checkMate === 'w' ? "Black" : "White"} is in Checkmate!`);
+    updateTurnText(`${this.turn === 'w' ? "White's" : "Black's"} Turn`);
+    if (this.checkMate) {
+      updateStatusText(`${this.checkMate === 'b' ? "Black" : "White"} is in Checkmate!`);
     }
-    if (this.check) {
+    else if (this.check) {
       updateStatusText(`${this.check === 'w' ? "White" : "Black"} is in Check!`);
     } else {
       updateStatusText(``);
@@ -78,10 +79,10 @@ export class GameController {
     const piece = this.board.getBoard()[position];
     if (!piece) return null;
 
-
-    this.selectedPiece = { piece: PieceByValue[piece], position };
+    this.selectedPiece = { piece: PieceByValue[piece], position, pieceColor: isLowerCase(PieceByValue[piece]) ? 'b' : 'w' };
     this.board.popIndex(position);
     this.toggleDragging();
+    this.legalMoves = this.getLegalMoves();
 
     return piece;
   }
@@ -92,62 +93,46 @@ export class GameController {
     return pieceColor === this.turn;
   }
 
-  public updateCheck(newPosition: number) {
-    const rivalColor = this.turn === 'w' ? 'b' : 'w';
-    const legalMoves = wrapLegalMoves(this.selectedPiece.piece, newPosition, this.turn);
-    const inCheck = rivalKingCheck(this.turn, legalMoves);
-    this.check = inCheck ? rivalColor : null;
-    this.updateBoardInfo();
-  }
-
   public dropPiece(square: HoveredSquare) {
     if (!this.selectedPiece) return;
     const { rank, file } = square;
     const newPosition = normalizeUInd({ rank: Rank[rank], file }) - 1;
-    const legalMoves = this.getLegalMoves();
 
-    if (!legalMoves.includes(newPosition)) {
+    if (newPosition === this.selectedPiece.position) {
+      this.cancelMove();
+      return;
+    }
+
+    const kingCheck = this.board.simulateMove(this.selectedPiece, newPosition, () => {
+      return isKingInCheck(this.selectedPiece.pieceColor, this.board.getKing(this.selectedPiece.pieceColor).position);
+    });
+
+    if (kingCheck || !this.legalMoves.includes(newPosition) || (this.playStatus === 'finished')) {
       this.cancelMove();
     } else {
-      this.updateCheck(newPosition);
       this.board.popIndex(this.selectedPiece.position);
       this.board.movePiece(this.selectedPiece.piece, newPosition);
       this.selectedPiece = null;
       this.draggin = false;
+      this.legalMoves = [];
       this.changeTurn();
     }
-  }
-
-  public simulateMove(newPosition: number, cb: any) {
-    if (!this.selectedPiece) return;
-    const oldPiece = this.board.getPieceAt(newPosition);
-    this.board.popIndex(this.selectedPiece.position);
-    this.board.movePiece(this.selectedPiece.piece, newPosition);
-    const result = cb();
-    this.board.popIndex(newPosition);
-    this.board.movePiece(this.selectedPiece.piece, this.selectedPiece.position);
-    if (oldPiece) {
-      this.board.movePiece(oldPiece, newPosition);
-    } else {
-      this.board.popIndex(newPosition);
-    } // REMOVE GHOST PIECE
-    return result;
   }
 
   public cancelMove() {
     if (!this.selectedPiece) return;
     this.board.movePiece(this.selectedPiece.piece, this.selectedPiece.position);
     this.selectedPiece = null;
+    this.legalMoves = [];
   }
 
   public getLegalMoves() {
 
-    if (!this.selectedPiece || !this.isPieceTurn()) return [];
+    if (!this.selectedPiece || !this.isPieceTurn() || (this.playStatus === 'finished')) return [];
+
+    if (this.legalMoves.length) return this.legalMoves;
+
     const legalMoves = getValidMoves(this.selectedPiece);
-    if ((legalMoves.length === 0) && (this.selectedPiece.piece.toLowerCase()) === 'k') {
-      this.checkMate = this.turn === 'w' ? 'b' : 'w';
-      this.updateBoardInfo();
-    }
 
     return legalMoves;
 
@@ -166,6 +151,22 @@ export class GameController {
     }
 
     this.draggin = false;
+  }
+
+  public finishGame(winner: 'w' | 'b') {
+    this.playStatus = 'finished';
+  }
+
+  public resetGame() {
+    this.turn = 'w';
+    this.moveLog = [];
+    this.selectedPiece = null;
+    this.draggin = false;
+    this.check = null;
+    this.checkMate = null;
+    this.playStatus = 'playing';
+    this.board = new Board('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
+    this.updateBoardInfo();
   }
 
   public getBoard() {

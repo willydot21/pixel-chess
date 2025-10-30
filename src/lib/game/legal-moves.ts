@@ -2,7 +2,7 @@
 import { getCoords, isLowerCase } from "../utilities";
 import { Piece, PieceByValue } from "../fen";
 import { gameController } from "../../main";
-import { getValidMoves } from "./move";
+import type { IPieceInfo } from "../types";
 
 type PieceColor = 'w' | 'b';
 
@@ -290,7 +290,7 @@ export const getRivalPieces = (rivalColor: PieceColor) => {
     if (!square) continue;
     const piece = PieceByValue[square] as string;
     const pieceColor = isLowerCase(piece) ? 'b' : 'w';
-    if (piece && pieceColor === rivalColor) {
+    if (piece && (pieceColor === rivalColor)) {
       pieces.push({ piece, position: i });
     }
   }
@@ -299,25 +299,13 @@ export const getRivalPieces = (rivalColor: PieceColor) => {
 
 export const isKingInCheck = (pieceColor: PieceColor, index?: number) => {
   const rivalColor = pieceColor === 'w' ? 'b' : 'w';
-  const kingId = rivalColor === 'w' ? -6 : 6;
-  const rivalKingIndex = index ?? gameController.board.getIndexById(kingId);
+  const { position: _kingPos } = gameController.board.getKing(pieceColor);
+  const criticalIndex = index ?? _kingPos;
   const rivalPieces = getRivalPieces(rivalColor);
+
   for (let { piece, position } of rivalPieces) {
     const legalMoves = wrapLegalMoves(piece, position, rivalColor);
-    if (legalMoves.includes(rivalKingIndex)) return true;
-  }
-  return false;
-}
-
-// CHECK FUNCTION
-export const rivalKingCheck = (pieceColor: PieceColor, legalMoves: number[]) => {
-  const rivalColor = pieceColor === 'w' ? 'b' : 'w';
-  const kingPiece = rivalColor === 'w' ? 'K' : 'k';
-  for (let move of legalMoves) {
-    const targetPiece = gameController.board.getPieceAt(move);
-    if (targetPiece && (targetPiece === kingPiece)) {
-      return true
-    }
+    if (legalMoves.includes(criticalIndex)) return true;
   }
   return false;
 }
@@ -345,9 +333,32 @@ export const wrapLegalMoves = (piece: string, index: number, pieceColor: PieceCo
   return legalDict[piece.toLowerCase()](pieceColor, index);
 }
 
-export const filterSafeMoves = (pieceColor: PieceColor, legalMoves: number[]) => {
-  return legalMoves.filter(move =>
-    gameController.simulateMove(
-      move,
-      () => isKingInCheck(pieceColor, move)) === false);
+
+export const filterSafeMoves = (piece: IPieceInfo, legalMoves: number[]) => {
+  const { pieceColor } = piece;
+  return legalMoves.filter(move => {
+
+    const result =
+      gameController.board.simulateMove(
+        piece,
+        move,
+        () => isKingInCheck(pieceColor));
+
+    return result === false;
+  });
+}
+
+export const forcedMate = (color: 'w' | 'b') => {
+  const pieces = getRivalPieces(color);
+
+  if (!gameController.check && pieces.length > 1) return false;
+  for (let { piece, position } of pieces) {
+    const legalMoves = wrapLegalMoves(piece, position, color);
+    if (legalMoves.length <= 0) continue;
+    const safeMoves = filterSafeMoves({ piece, position, pieceColor: color }, legalMoves);
+    if (color === gameController.getTurn()) console.log('piece', piece, 'at', position, 'has safe moves:', safeMoves);
+    if (safeMoves.length > 0) return false;
+  }
+
+  return true;
 }

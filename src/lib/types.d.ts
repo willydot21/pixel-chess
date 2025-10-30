@@ -6,3 +6,9 @@ export interface ISheetParameters {
   size: 'sm' | 'md';
   style: 'simplified' | 'wood' | 'wood-simplified' | 'default';
 }
+
+export interface IPieceInfo {
+  piece: string;
+  position: number;
+  pieceColor: 'w' | 'b';
+}

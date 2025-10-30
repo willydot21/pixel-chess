@@ -2,8 +2,8 @@
 import { Sprite } from "./lib/sprite.ts";
 import { PieceByValue } from "./lib/fen.ts";
 import { getCoords, isLowerCase } from "./lib/utilities.ts";
-import constants, { applyOffset, updateConstants, } from "./lib/board/constants.ts";
-import { canvas, use } from "./lib/canvas.ts";
+import { applyOffset, updateConstants, } from "./lib/board/constants.ts";
+import { use } from "./lib/canvas.ts";
 import { hoveredSquare, mousePosition } from "./lib/mouse.ts";
 import { GameController } from "./lib/game/controller.ts";
 
@@ -158,6 +158,7 @@ const main = async () => {
   await Sprite.load();
 
   gameController.init();
+  console.log('Game Initialized');
 
   draw();
 

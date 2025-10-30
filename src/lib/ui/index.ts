@@ -1,3 +1,4 @@
+import { draw, gameController } from "../../main";
 
 
 export const { $, $$ } = {
@@ -16,3 +17,10 @@ export const updateTurnText = (text: string) => {
   turnText.textContent = text;
   return turnText;
 }
+
+
+export const startButton = $('#newGame') as HTMLButtonElement;
+startButton.addEventListener('click', () => {
+  gameController.resetGame();
+  draw();
+});
