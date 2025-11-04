@@ -3,6 +3,7 @@ import { getCoords, isLowerCase } from "../utilities";
 import { Piece, PieceByValue } from "../fen";
 import { gameController } from "../../main";
 import type { IPieceInfo } from "../types";
+import { canDoPassant, onPassantMove } from "./special-moves";
 
 type PieceColor = 'w' | 'b';
 
@@ -221,7 +222,8 @@ export const pawnLegalMoves = (pieceColor: PieceColor, index: number) => {
     canMoveDiag(diag[0], 'east'),
     canMoveDiag(diag[1], 'west'),
     isEmpty(single) && single,
-    (isEmpty(double) && pawnFirstMove(index, pieceColor) && isEmpty(single)) && double
+    (isEmpty(double) && pawnFirstMove(index, pieceColor) && isEmpty(single)) && double,
+    onPassantMove({ pawnPosition: index, pieceColor })
   ].filter(Boolean);
 
   return legalMoves;
@@ -356,7 +358,6 @@ export const forcedMate = (color: 'w' | 'b') => {
     const legalMoves = wrapLegalMoves(piece, position, color);
     if (legalMoves.length <= 0) continue;
     const safeMoves = filterSafeMoves({ piece, position, pieceColor: color }, legalMoves);
-    if (color === gameController.getTurn()) console.log('piece', piece, 'at', position, 'has safe moves:', safeMoves);
     if (safeMoves.length > 0) return false;
   }
 

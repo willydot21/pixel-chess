@@ -7,6 +7,7 @@ import { updateStatusText, updateTurnText } from "../ui";
 import { isLowerCase, normalizeUInd, Rank } from "../utilities";
 import { forcedMate, isKingInCheck } from "./legal-moves";
 import { getValidMoves } from "./move";
+import { isPassantMove, isPawnPassantable } from "./special-moves";
 
 export class GameController {
 
@@ -17,13 +18,32 @@ export class GameController {
   public check: 'w' | 'b' = null;
   public checkMate: 'w' | 'b' = null;
   private legalMoves: number[] = [];
-  //public board: Board = new Board();
+  public board: Board = new Board();
+  private passantTarget: number | null = null;
   public playStatus: 'playing' | 'finished' = 'playing';
-  public board: Board = new Board('8/8/8/8/8/6k2/7p/7K');
   constructor() {
   }
 
   public getTurn() { return this.turn; }
+
+  public getPassantTarget() { return this.passantTarget; }
+
+  public updatePassantTarget(newPosition: number | null) {
+
+    if (!(this.selectedPiece.piece.toLowerCase() === 'p')) {
+      this.passantTarget = null;
+      return;
+    };
+
+    if (isPassantMove(this.selectedPiece.pieceColor, newPosition)) {
+      this.board.popIndex(this.passantTarget);
+      this.passantTarget = null;
+      return;
+    }
+
+    const passantTarget = isPawnPassantable(this.selectedPiece, newPosition) ? newPosition : null;
+    this.passantTarget = passantTarget;
+  }
 
   public checkState() {
     const rivalColor = this.turn === 'w' ? 'b' : 'w'
@@ -58,6 +78,7 @@ export class GameController {
     this.turn = this.turn === 'w' ? 'b' : 'w';
     this.checkState();
     this.updateBoardInfo();
+    console.log(`pawn passant target: ${this.passantTarget}`);
     draw();
   }
 
@@ -102,6 +123,8 @@ export class GameController {
       this.cancelMove();
       return;
     }
+
+    this.updatePassantTarget(newPosition);
 
     const kingCheck = this.board.simulateMove(this.selectedPiece, newPosition, () => {
       return isKingInCheck(this.selectedPiece.pieceColor, this.board.getKing(this.selectedPiece.pieceColor).position);
@@ -157,7 +180,7 @@ export class GameController {
     this.playStatus = 'finished';
   }
 
-  public resetGame() {
+  public resetGame(fen?: string) {
     this.turn = 'w';
     this.moveLog = [];
     this.selectedPiece = null;
@@ -165,8 +188,8 @@ export class GameController {
     this.check = null;
     this.checkMate = null;
     this.playStatus = 'playing';
-    this.board = new Board('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
-    this.updateBoardInfo();
+    this.board = new Board(fen);
+    this.init();
   }
 
   public getBoard() {

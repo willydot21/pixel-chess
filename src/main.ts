@@ -6,6 +6,7 @@ import { applyOffset, updateConstants, } from "./lib/board/constants.ts";
 import { use } from "./lib/canvas.ts";
 import { hoveredSquare, mousePosition } from "./lib/mouse.ts";
 import { GameController } from "./lib/game/controller.ts";
+import { test } from "./lib/game/test.ts";
 
 const { squareSize, boardSize, scale, borderOff, borderOffPercent, offset } = updateConstants();
 
@@ -165,3 +166,5 @@ const main = async () => {
 }
 
 main();
+test(gameController);
+gameController.resetGame();
