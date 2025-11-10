@@ -3,7 +3,7 @@ import { getCoords, isLowerCase } from "../utilities";
 import { Piece, PieceByValue } from "../fen";
 import { gameController } from "../../main";
 import type { IPieceInfo } from "../types";
-import { canDoPassant, onPassantMove } from "./special-moves";
+import { canDoPassant, onPassantMove } from "./special moves";
 
 type PieceColor = 'w' | 'b';
 

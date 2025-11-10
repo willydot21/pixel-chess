@@ -1,0 +1,1 @@
+export { isPassantMove, isPawnPassantable, onPassantMove, canDoPassant } from './passant'

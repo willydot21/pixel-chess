@@ -1,3 +1,4 @@
+import { gameController } from "../main";
 
 export enum Rank {
   A = 1,
@@ -54,4 +55,15 @@ export const getIndexPosition = (coords: { file: number, rank: string }) => {
 
   return opr - 1;
 
+}
+
+export const indexesOf = (id: number) => {
+  const board = gameController.getBoard();
+  const indexes = [];
+  let sPos = -1;
+
+  while ((sPos = board.indexOf(id, sPos + 1)) !== -1) {
+    indexes.push(sPos);
+  }
+  return indexes.length < 2 ? indexes[0] : indexes;
 }

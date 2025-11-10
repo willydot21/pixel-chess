@@ -1,5 +1,5 @@
-import { gameController } from "../../main";
-import { moveNorth, moveSouth, pawnFirstMove } from "./legal-moves"
+import { gameController } from "../../../main";
+import { moveNorth, moveSouth, pawnFirstMove } from "../legal-moves"
 
 export const isPawnPassantable = ({ pieceColor, position }: {
   pieceColor: 'w' | 'b',

@@ -7,7 +7,8 @@ import { updateStatusText, updateTurnText } from "../ui";
 import { isLowerCase, normalizeUInd, Rank } from "../utilities";
 import { forcedMate, isKingInCheck } from "./legal-moves";
 import { getValidMoves } from "./move";
-import { isPassantMove, isPawnPassantable } from "./special-moves";
+import { isPassantMove, isPawnPassantable } from "./special moves";
+import { CastlingController } from "./special moves/castling";
 
 export class GameController {
 
@@ -21,6 +22,8 @@ export class GameController {
   public board: Board = new Board();
   private passantTarget: number | null = null;
   public playStatus: 'playing' | 'finished' = 'playing';
+  public castling = new CastlingController();
+
   constructor() {
   }
 
@@ -77,8 +80,8 @@ export class GameController {
   public changeTurn() {
     this.turn = this.turn === 'w' ? 'b' : 'w';
     this.checkState();
+    this.castling.updateCastling();
     this.updateBoardInfo();
-    console.log(`pawn passant target: ${this.passantTarget}`);
     draw();
   }
 
@@ -103,6 +106,7 @@ export class GameController {
     this.selectedPiece = { piece: PieceByValue[piece], position, pieceColor: isLowerCase(PieceByValue[piece]) ? 'b' : 'w' };
     this.board.popIndex(position);
     this.toggleDragging();
+    console.log(this.castling.getCastlingMoves(this.selectedPiece));
     this.legalMoves = this.getLegalMoves();
 
     return piece;
@@ -135,6 +139,7 @@ export class GameController {
     } else {
       this.board.popIndex(this.selectedPiece.position);
       this.board.movePiece(this.selectedPiece.piece, newPosition);
+      this.castling.updateState(this.selectedPiece);
       this.selectedPiece = null;
       this.draggin = false;
       this.legalMoves = [];

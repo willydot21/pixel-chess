@@ -3,7 +3,7 @@
 
 import { genFromFen, Piece, PieceByValue } from "../fen";
 import type { IPieceInfo } from "../types";
-import { isLowerCase } from "../utilities";
+import { indexesOf, isLowerCase } from "../utilities";
 
 
 class BoardState {
@@ -82,12 +82,12 @@ export default class Board extends BoardState {
   public getKing(color: 'b' | 'w'): IPieceInfo {
     const id = color === 'b' ? -6 : 6;
     const piece = PieceByValue[id];
-    const index = this.getIndexById(id);
+    const index = this.getIndexById(id) as number;
     return { piece, position: index, pieceColor: color };
   }
 
   public getIndexById(id: number) {
-    return this.board.indexOf(id);
+    return indexesOf(id);
   }
 
   public reverseMap() { return [...this.board].reverse(); }
