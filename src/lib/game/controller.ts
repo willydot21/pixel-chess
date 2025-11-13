@@ -106,7 +106,6 @@ export class GameController {
     this.selectedPiece = { piece: PieceByValue[piece], position, pieceColor: isLowerCase(PieceByValue[piece]) ? 'b' : 'w' };
     this.board.popIndex(position);
     this.toggleDragging();
-    console.log(this.castling.getCastlingMoves(this.selectedPiece));
     this.legalMoves = this.getLegalMoves();
 
     return piece;
@@ -134,8 +133,20 @@ export class GameController {
       return isKingInCheck(this.selectedPiece.pieceColor, this.board.getKing(this.selectedPiece.pieceColor).position);
     });
 
+    const castlingMove = this.castling.checkCastlingMove(this.selectedPiece, newPosition);
+
+    if (castlingMove && (this.selectedPiece.pieceColor === this.turn)) {
+      this.castling.doCastling(this.selectedPiece, castlingMove);
+      this.selectedPiece = null;
+      this.draggin = false;
+      this.legalMoves = [];
+      this.changeTurn();
+      return;
+    }
+
     if (kingCheck || !this.legalMoves.includes(newPosition) || (this.playStatus === 'finished')) {
       this.cancelMove();
+
     } else {
       this.board.popIndex(this.selectedPiece.position);
       this.board.movePiece(this.selectedPiece.piece, newPosition);

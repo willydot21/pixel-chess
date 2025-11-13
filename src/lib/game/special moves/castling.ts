@@ -8,6 +8,13 @@ type CastlingMove = ['left' | 'right', {
   rook: number
 }]
 
+
+export function camelize(str: string) {
+  return str.replace(/(?:^\w|[A-Z]|\b\w)/g, function (word, index) {
+    return index === 0 ? word.toLowerCase() : word.toUpperCase();
+  }).replace(/\s+/g, '');
+}
+
 export class CastlingController {
 
   private canCastle = {
@@ -83,10 +90,9 @@ export class CastlingController {
     const sideIndex = side === 'left' ? 0 : 1;
     const kingPos = this.initialPositions[color].king
     const rookPos = this.initialPositions[color].rooks[sideIndex];
-    const fixRookPos = rookPos + Number(side === 'left')
     let square = kingPos;
 
-    while (square !== fixRookPos) {
+    while (square !== rookPos) {
       const isOccupied = !isEmpty(square)
         && (square !== kingPos);
       const dangerSquare = isKingInCheck(colorFix, square);
@@ -142,7 +148,7 @@ export class CastlingController {
       }
     }
 
-    const isAllowed = (direction: 'left' | 'right') => this.canCastle[color][direction] && [direction, castlingMoves[direction]];
+    const isAllowed = (direction: 'left' | 'right') => this.canCastle[color][direction] && [direction, castlingMoves[direction]] as CastlingMove;
 
     return [
       isAllowed('left'),
@@ -151,31 +157,67 @@ export class CastlingController {
 
   }
 
-  public doCastling(
+  private isKing(piece: string) {
+    return piece.toLowerCase() === 'k';
+  }
+
+  private isRook(piece: string) {
+    return piece.toLowerCase() === 'r';
+  }
+
+  private getDirectionByRookIndex(rookIndex: number) {
+    const asBlack = this.initialPositions.black.rooks.indexOf(rookIndex);
+    const asWhite = this.initialPositions.white.rooks.indexOf(rookIndex);
+
+    if ((asBlack + asWhite) === -2) return null;
+
+    return (asBlack === 0) || (asWhite === 0) ? 'left' : 'right';
+  }
+
+  public checkCastlingMove(
     selectedPiece: IPieceInfo,
-    newPosition: number
-  ) {
+    newPosition: number) {
+
+    const { piece, pieceColor } = selectedPiece;
+
+    if (!this.isKing(piece)) return false;
+
+    const targetSquare = gameController.board.getPieceAt(newPosition);
+
+    if (!this.isRook(targetSquare)) return false;
+
+    const moves = this.getCastlingMoves(selectedPiece);
+
+    if (!moves.length) return false;
+
+    const direction = this.getDirectionByRookIndex(newPosition);
+    const targetMove = moves.filter(([dir,]) => dir === direction);
+
+    if (!(targetMove.length)) return false;
+
+    return targetMove[0];
+
+  }
+
+  public doCastling(selectedPiece: IPieceInfo, move: CastlingMove) {
 
     const { position, piece, pieceColor } = selectedPiece;
     const color = pieceColor === 'w' ? 'white' : 'black';
-    const moves = this.getCastlingMoves(selectedPiece);
     const indexByDirection = (dir: 'left' | 'right') => dir === 'left' ? 0 : 1;
+    const [direction, { king: kingPos, rook: rookPos }] = move;
+    const index = indexByDirection(direction);
+    const oldRookIndex = this.initialPositions[color].rooks[index];
+    const rook = gameController.board.getPieceAt(oldRookIndex);
+    const targetking = camelize(pieceColor + 'king');
+    const targetRook = camelize(pieceColor + direction + 'rook');
 
-    if (!moves.length) return;
+    gameController.board.popIndex(oldRookIndex);
+    gameController.board.movePiece(rook, rookPos);
+    gameController.board.popIndex(position);
+    gameController.board.movePiece(piece, kingPos);
 
-    const targetMove = moves.filter(([_, { king }]: CastlingMove) => king === newPosition)[0];
-
-    if (!targetMove.length) return;
-
-    console.log(targetMove[0]);
-
-    // THIS S* SHOULD BE LIKE [DIRECTION, {}];
-
-    const [direction, { }] = targetMove;
-    //const index = indexByDirection(direction);
-    const oldRookIndex = this.initialPositions[color].rooks[0]
-
-
+    this.piecesState[targetking] = true;
+    this.piecesState[targetRook] = true;
 
   }
 

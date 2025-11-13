@@ -73,7 +73,7 @@ export default class Board extends BoardState {
     this.board[ind] = 0;
   }
 
-  public getPieceAt(ind: number) {
+  public getPieceAt(ind: number): string | null {
     const pieceValue = this.board[ind];
     if (!pieceValue) return null;
     return PieceByValue[pieceValue] || null;
