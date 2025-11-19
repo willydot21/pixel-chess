@@ -167,4 +167,3 @@ const main = async () => {
 
 main();
 test(gameController);
-gameController.resetGame();

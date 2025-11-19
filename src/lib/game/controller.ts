@@ -75,6 +75,7 @@ export class GameController {
   public init() {
     this.checkState();
     this.updateBoardInfo();
+    this.castling.updateCastling();
   }
 
   public changeTurn() {
@@ -133,7 +134,12 @@ export class GameController {
       return isKingInCheck(this.selectedPiece.pieceColor, this.board.getKing(this.selectedPiece.pieceColor).position);
     });
 
+    console.log(this.castling.getCastlingState());
+
     const castlingMove = this.castling.checkCastlingMove(this.selectedPiece, newPosition);
+
+
+    if (castlingMove) console.log(castlingMove)
 
     if (castlingMove && (this.selectedPiece.pieceColor === this.turn)) {
       this.castling.doCastling(this.selectedPiece, castlingMove);

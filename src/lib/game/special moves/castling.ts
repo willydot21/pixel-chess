@@ -9,11 +9,15 @@ type CastlingMove = ['left' | 'right', {
 }]
 
 
-export function camelize(str: string) {
-  return str.replace(/(?:^\w|[A-Z]|\b\w)/g, function (word, index) {
-    return index === 0 ? word.toLowerCase() : word.toUpperCase();
-  }).replace(/\s+/g, '');
-}
+const camelize = (s: string) => {
+  return s
+    .toString()
+    .trim()
+    .split(/[\s-_]+/)           // split on spaces, dash, underscore
+    .map((w, i) => i === 0 ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join('')
+};
+
 
 export class CastlingController {
 
@@ -158,10 +162,12 @@ export class CastlingController {
   }
 
   private isKing(piece: string) {
+    if (!piece) return false;
     return piece.toLowerCase() === 'k';
   }
 
-  private isRook(piece: string) {
+  private isRook(piece?: string) {
+    if (!piece) return false;
     return piece.toLowerCase() === 'r';
   }
 
@@ -178,7 +184,7 @@ export class CastlingController {
     selectedPiece: IPieceInfo,
     newPosition: number) {
 
-    const { piece, pieceColor } = selectedPiece;
+    const { piece } = selectedPiece;
 
     if (!this.isKing(piece)) return false;
 
@@ -208,8 +214,8 @@ export class CastlingController {
     const index = indexByDirection(direction);
     const oldRookIndex = this.initialPositions[color].rooks[index];
     const rook = gameController.board.getPieceAt(oldRookIndex);
-    const targetking = camelize(pieceColor + 'king');
-    const targetRook = camelize(pieceColor + direction + 'rook');
+    const targetking = camelize(color + '_' + 'king');
+    const targetRook = camelize(color + '_' + direction + '_' + 'rook');
 
     gameController.board.popIndex(oldRookIndex);
     gameController.board.movePiece(rook, rookPos);
@@ -218,7 +224,7 @@ export class CastlingController {
 
     this.piecesState[targetking] = true;
     this.piecesState[targetRook] = true;
-
+    // SE PUEDE HACER ENROQUE DESPUES DE UN ENROQUE
   }
 
 }
