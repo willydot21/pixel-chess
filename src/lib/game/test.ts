@@ -67,20 +67,6 @@ const printResults = (results: IMateFen[], showOnlyFailed: boolean = false) => {
   });
 }
 
-
-const hardCodedCastlingTest = (game: GameController) => {
-  console.log("Running castling test...");
-
-  const fens = [
-    'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQK2R'
-  ];
-
-  fens.forEach(scenario => {
-    game.resetGame(scenario);
-  });
-
-}
-
 export function test(gameController: GameController) {
   console.log("Running test...");
 
@@ -99,7 +85,5 @@ export function test(gameController: GameController) {
 
   gameController.resetGame();
   console.log("MATE Test completed.");
-
-  hardCodedCastlingTest(gameController);
 
 }

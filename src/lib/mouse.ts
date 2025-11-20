@@ -11,6 +11,19 @@ export var hoveredSquare: HoveredSquare = {
   rank: null, file: null, sx: null, sy: null
 }
 
+export var hoveredPromotionPiece = {
+  sx: null,
+  sy: null,
+  type: null
+};
+
+const updatePromotionPiece = (e: MouseEvent) => {
+  e.preventDefault();
+  const { x, y } = updateMousePosition(e);
+  if (mouseOnBoard(x, y)) {
+
+  }
+}
 
 const updateMousePosition = (e: MouseEvent) => {
   if (!e.target) return;
@@ -57,6 +70,8 @@ const select = (e: MouseEvent) => {
   e.preventDefault();
   e.stopPropagation();
 
+  if (gameController.promotion.getStatus()) return;
+
   gameController.selectPiece(hoveredSquare);
 }
 
@@ -65,7 +80,13 @@ const mouseMove = (e: MouseEvent) => {
   e.preventDefault();
   e.stopPropagation();
 
-  updateHoveredSquare(e)
+  if (gameController.promotion.getStatus()) {
+
+
+    return;
+  };
+
+  updateHoveredSquare(e);
   if (gameController.draggin && gameController.selectedPiece) {
     movePiece(gameController.selectedPiece);
   }
@@ -78,6 +99,8 @@ canvas.addEventListener('mouseup', e => {
   e.preventDefault();
   e.stopPropagation();
 
-  gameController.dropPiece(hoveredSquare);
-  draw();
+  if (gameController.selectedPiece && !gameController.promotion.getStatus()) {
+    gameController.dropPiece(hoveredSquare);
+    draw();
+  }
 })

@@ -1,7 +1,7 @@
 import { draw } from "../../main";
 import Board from "../board";
 import { PieceByValue } from "../fen";
-import type { HoveredSquare } from "../mouse";
+import { type HoveredSquare } from "../mouse";
 import type { IPieceInfo } from "../types";
 import { updateStatusText, updateTurnText } from "../ui";
 import { isLowerCase, normalizeUInd, Rank } from "../utilities";
@@ -9,6 +9,7 @@ import { forcedMate, isKingInCheck } from "./legal-moves";
 import { getValidMoves } from "./move";
 import { isPassantMove, isPawnPassantable } from "./special moves";
 import { CastlingController } from "./special moves/castling";
+import { PromotionController } from "./special moves/promotion";
 
 export class GameController {
 
@@ -20,6 +21,7 @@ export class GameController {
   public checkMate: 'w' | 'b' = null;
   private legalMoves: number[] = [];
   public board: Board = new Board();
+  public promotion = new PromotionController();
   private passantTarget: number | null = null;
   public playStatus: 'playing' | 'finished' = 'playing';
   public castling = new CastlingController();
@@ -134,12 +136,16 @@ export class GameController {
       return isKingInCheck(this.selectedPiece.pieceColor, this.board.getKing(this.selectedPiece.pieceColor).position);
     });
 
-    console.log(this.castling.getCastlingState());
-
     const castlingMove = this.castling.checkCastlingMove(this.selectedPiece, newPosition);
 
+    this.promotion.update(this.selectedPiece);
+    console.log(this.promotion.getStatus());
 
-    if (castlingMove) console.log(castlingMove)
+    if (this.promotion.getStatus()) {
+      this.draggin = false;
+      this.promotion.promote();
+      return;
+    }
 
     if (castlingMove && (this.selectedPiece.pieceColor === this.turn)) {
       this.castling.doCastling(this.selectedPiece, castlingMove);

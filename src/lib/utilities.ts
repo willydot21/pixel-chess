@@ -57,6 +57,11 @@ export const getIndexPosition = (coords: { file: number, rank: string }) => {
 
 }
 
+export const getUiPosition = (index: number) => {
+  const { rankVal: rank, file } = getCoords(index + 1);
+  return normalizeUInd({ rank, file });
+}
+
 export const indexesOf = (id: number) => {
   const board = gameController.getBoard();
   const indexes = [];
