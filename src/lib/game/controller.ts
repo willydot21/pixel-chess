@@ -1,5 +1,6 @@
 import { draw } from "../../main";
 import Board from "../board";
+import { context } from "../canvas";
 import { PieceByValue } from "../fen";
 import { type HoveredSquare } from "../mouse";
 import type { IPieceInfo } from "../types";
@@ -137,13 +138,20 @@ export class GameController {
     });
 
     const castlingMove = this.castling.checkCastlingMove(this.selectedPiece, newPosition);
-
     this.promotion.update(this.selectedPiece);
-    console.log(this.promotion.getStatus());
 
     if (this.promotion.getStatus()) {
       this.draggin = false;
-      this.promotion.promote();
+      this.promotion.wait((piece) => {
+
+        this.selectedPiece.piece = piece;
+        this.board.popIndex(this.selectedPiece.position);
+        this.board.movePiece(this.selectedPiece.piece, newPosition);
+        this.selectedPiece = null;
+        this.draggin = false;
+        this.legalMoves = [];
+        this.changeTurn();
+      });
       return;
     }
 
@@ -189,8 +197,12 @@ export class GameController {
 
   }
 
-  public logMove(oldIndex: number, newIndex: number) {
-    this.moveLog.push({ oldIndex, newIndex });
+  public logMove({ newPosition, as }: {
+    newPosition: number,
+    as: 'promotion' | 'castling' | 'capture' | 'default'
+  }) {
+
+    this.moveLog.push({ piece: this.selectedPiece, newPosition, as });
   }
 
   public getMoveLog() { return this.moveLog; }

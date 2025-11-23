@@ -65,8 +65,7 @@ export class CastlingController {
     const { white, black } = this.initialPositions;
 
     const colorTarget = position < 56 ? black.rooks : white.rooks;
-    const indexed = colorTarget.indexOf(position)
-
+    const indexed = colorTarget.indexOf(position);
     if (!indexed) return;
 
     return (indexed === 0) ? 'Left' : 'Right';
@@ -81,10 +80,16 @@ export class CastlingController {
 
     const color = pieceColor === 'w' ? 'white' : 'black';
     const type = piece.toLowerCase() === 'k' ? 'King' : 'Rook';
-    const side = (type !== 'King') && this.sideByPosition(position);
-    const target = color + side + type;
+    const side = this.sideByPosition(position);
 
-    return target;
+    if ((type === 'Rook') && !side) return null;
+    // just for avoid creation of new properties.
+
+    if ((type === 'Rook') && side) {
+      return color + side + type; // is rook and have side
+    }
+
+    return color + type; // is king
 
   }
 
@@ -186,6 +191,8 @@ export class CastlingController {
 
     const { piece } = selectedPiece;
 
+    console.log(this.piecesState);
+
     if (!this.isKing(piece)) return false;
 
     const targetSquare = gameController.board.getPieceAt(newPosition);
@@ -224,7 +231,6 @@ export class CastlingController {
 
     this.piecesState[targetking] = true;
     this.piecesState[targetRook] = true;
-    // SE PUEDE HACER ENROQUE DESPUES DE UN ENROQUE
   }
 
 }

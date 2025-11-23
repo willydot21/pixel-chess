@@ -73,13 +73,14 @@ export const sheetInfo = {
 }
 
 
-const sheetByColor = (color: string) => {
+export const sheetByColor = (color: string) => {
   return color === 'b' ? bPieces : wPieces;
 }
+
 const boardSpr = new Sprite(sources.bdP, 0, 0, boardSize * scale, boardSize * scale);
 const wPieces = new Sprite(sources.wP, 0, 0, 16, 32);
 const bPieces = new Sprite(sources.bP, 0, 0, 16, 32);
-const square = new Sprite(sources.sOv, 0, 0, squareSize * 1.2, squareSize * 1.2);
+export const square = new Sprite(sources.sOv, 0, 0, squareSize * 1.2, squareSize * 1.2);
 export const gameController = new GameController();
 
 export const drawLegalMoves = (legalMoves: number[]) => {
@@ -95,41 +96,6 @@ export const drawLegalMoves = (legalMoves: number[]) => {
       ctx.strokeRect(x - fixSquare, y - fixSquare, squareSize, squareSize);
       ctx.shadowBlur = 0;
     });
-  });
-}
-
-export const drawPromotionMenu = () => {
-  const { position, pieceColor: color } = gameController.selectedPiece;
-  const pieces = color === 'w' ? 'nrbq' : 'NRBQ';
-  const pieceSheet = sheetByColor(color);
-  let { rankVal: rank, file } = getCoords(getUiPosition(position));
-
-  color === 'w' ? file++ : file;
-
-  file = 8 - file;
-
-  if (color === 'b') file -= 4;
-
-
-  let [x, y] = [applyOffset(rank - 1), applyOffset(file + 1)];
-  const [offsetX, offsetY] = [squareSize / 4, -(squareSize / 8)];
-
-  use(ctx => {
-    ctx.fillRect(x, y, squareSize, squareSize * 4)
-  });
-
-  pieces.split('').forEach((piece, index) => {
-    const { sx, sy } = sheetInfo[piece];
-    pieceSheet.drawSubSprite(
-      sx,
-      sy,
-      16, 32,
-      x + offsetX,
-      (y + offsetY) + squareSize * index,
-      squareSize / 2,
-      squareSize
-    );
-
   });
 }
 
@@ -185,7 +151,10 @@ export const draw = () => {
     });
     drawHoveredSquare();
     drawLegalMoves(legalMoves);
-    if (gameController.promotion.getStatus()) drawPromotionMenu();
+    if (gameController.promotion.getStatus()) {
+      gameController.promotion.drawPromotion();
+      gameController.promotion.drawHovered();
+    };
   });
 }
 

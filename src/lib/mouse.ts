@@ -2,6 +2,7 @@
 import { draw, movePiece, gameController } from "../main";
 import { applyOffset, aproximateValue, mouseOnBoard, updateConstants } from "./board/constants";
 import { canvas } from "./canvas";
+import type { IPromotionModal } from "./game/special moves/promotion";
 import { ReverseRank } from "./utilities";
 
 export interface HoveredSquare { sx?: number, sy?: number, rank?: string, file?: number }
@@ -11,17 +12,41 @@ export var hoveredSquare: HoveredSquare = {
   rank: null, file: null, sx: null, sy: null
 }
 
-export var hoveredPromotionPiece = {
-  sx: null,
-  sy: null,
-  type: null
-};
+const mouseOnModal = ({
+  sx, sy, width, height
+}: IPromotionModal) => {
 
-const updatePromotionPiece = (e: MouseEvent) => {
-  e.preventDefault();
+  const { x, y } = mousePosition;
+  const xInModal = (x > sx) && (x < (sx + width()));
+  const yInModal = (y > sy) && (y < (sy + height()));
+  return xInModal && yInModal;
+}
+
+const getHoveredPromotion = ({ sy, sx }: IPromotionModal) => {
+  let { y } = mousePosition;
+  const { squareSize } = updateConstants();
+  const pieceOrderMap = {
+    1: 'n', 2: 'r', 3: 'b', 4: 'q'
+  }
+  y = y - sy;
+
+  const aproximatedSquare = Math.trunc(y / squareSize) + 1;
+
+  return {
+    type: pieceOrderMap[aproximatedSquare],
+    sx: sx,
+    sy: sy + (aproximatedSquare - 1) * squareSize
+  };
+}
+
+const updateHoveredProm = (e: MouseEvent) => {
   const { x, y } = updateMousePosition(e);
-  if (mouseOnBoard(x, y)) {
+  const modal = gameController.promotion.getModal()
 
+  if (mouseOnBoard(x, y) && mouseOnModal(modal)) {
+    const hovered = getHoveredPromotion(modal);
+    gameController.promotion.updateHovered(hovered);
+    draw();
   }
 }
 
@@ -49,7 +74,6 @@ const updateMousePosition = (e: MouseEvent) => {
 }
 
 const updateHoveredSquare = (e: MouseEvent) => {
-  e.preventDefault();
   const { x, y } = updateMousePosition(e);
   if (mouseOnBoard(x, y)) {
     const scaleOffset = -3.4;
@@ -70,7 +94,12 @@ const select = (e: MouseEvent) => {
   e.preventDefault();
   e.stopPropagation();
 
-  if (gameController.promotion.getStatus()) return;
+  if (
+    gameController.promotion.getStatus()
+    && mouseOnModal(gameController.promotion.getModal())
+  ) {
+    gameController.promotion.onSelect();
+  };
 
   gameController.selectPiece(hoveredSquare);
 }
@@ -81,8 +110,7 @@ const mouseMove = (e: MouseEvent) => {
   e.stopPropagation();
 
   if (gameController.promotion.getStatus()) {
-
-
+    updateHoveredProm(e);
     return;
   };
 
