@@ -101,6 +101,13 @@ const select = (e: MouseEvent) => {
     gameController.promotion.onSelect();
   };
 
+  if (
+    !mouseOnBoard(mousePosition.x, mousePosition.y)
+    || !mouseOnModal(gameController.promotion.getModal())
+  ) {
+    return;
+  };
+
   gameController.selectPiece(hoveredSquare);
 }
 

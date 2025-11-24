@@ -142,16 +142,14 @@ export class GameController {
 
     if (this.promotion.getStatus()) {
       this.draggin = false;
-      this.promotion.wait((piece) => {
-
-        this.selectedPiece.piece = piece;
+      this.promotion.waitForSelection((target) => {
         this.board.popIndex(this.selectedPiece.position);
         this.board.movePiece(this.selectedPiece.piece, newPosition);
         this.selectedPiece = null;
         this.draggin = false;
         this.legalMoves = [];
         this.changeTurn();
-      });
+      }, { piece: this.selectedPiece, newPosition });
       return;
     }
 
@@ -171,6 +169,7 @@ export class GameController {
       this.board.popIndex(this.selectedPiece.position);
       this.board.movePiece(this.selectedPiece.piece, newPosition);
       this.castling.updateState(this.selectedPiece);
+      this.promotion.updateRookPromotions(this.selectedPiece, newPosition);
       this.selectedPiece = null;
       this.draggin = false;
       this.legalMoves = [];
@@ -229,6 +228,9 @@ export class GameController {
     this.checkMate = null;
     this.playStatus = 'playing';
     this.board = new Board(fen);
+    this.castling.reset();
+    this.promotion.reset();
+    this.passantTarget = null;
     this.init();
   }
 

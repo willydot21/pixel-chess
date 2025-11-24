@@ -3,6 +3,7 @@ import { applyOffset, updateConstants } from "../../board/constants";
 import { use } from "../../canvas";
 import type { IPieceInfo } from "../../types";
 import { getCoords, getUiPosition, isLowerCase } from "../../utilities";
+import { isKingInCheck } from "../legal-moves";
 
 export interface IPromotionModal {
   sx: number;
@@ -15,6 +16,11 @@ interface IHovered {
   sx: number;
   sy: number;
   type: string;
+}
+
+interface IRookPromotion {
+  color: 'w' | 'b';
+  position: number;
 }
 
 export class PromotionController {
@@ -33,7 +39,7 @@ export class PromotionController {
     height: null,
   }
 
-  private rookPromotions = [];
+  private rookPromotions: IRookPromotion[] = [];
 
   public getStatus() {
     return this.status;
@@ -100,31 +106,77 @@ export class PromotionController {
     });
   }
 
-  public trackRookPromotions(selectedPiece: IPieceInfo, newPosition) {
+  public isPromotedRook({ pieceColor, position }: IPieceInfo) {
+    console.log(this.rookPromotions);
+    const target = this.rookPromotions.findIndex(({ color, position: pos }) => {
+      return (color === pieceColor) && (pos === position);
+    });
+    return target !== -1;
   }
 
-  // FIX PROMOTION CASTLING ERRORS
+  public updateRookPromotions({ piece, pieceColor, position: tgPosition }: IPieceInfo, newPosition: number) {
+    if (piece.toLowerCase() !== 'r') return;
+    const target = this.rookPromotions.findIndex(({ color, position }) => {
+      return (color === pieceColor) && (position === tgPosition);
+    });
+    if (target !== -1) {
+      this.rookPromotions[target].position = newPosition;
+    }
+  }
 
-  public handleRookPromotion(newPosition: number, promotion: string) {
+  private handleRookPromotion(newPosition: number, promotion: string) {
     if (promotion.toLowerCase() === 'r') {
       const color = isLowerCase(promotion) ? 'b' : 'w';
       this.rookPromotions.push({
         color,
         position: newPosition,
-        piece: promotion,
-        like: (pos: number, piece: string) => {
-          return (piece === promotion) && (pos === newPosition)
-        }
       });
     }
   }
+  // CONSOLE ERROR: WIDTH IS NOT A FUNCTION ON MODAL CALLS, INVOLVES MOUSE MODULES.
 
-  public wait(cb: (s: string) => void) {
+  private verifyPromotion(selectedPiece: IPieceInfo, newPosition: number, promotion: string) {
+    const prevPiece = selectedPiece.piece;
+    selectedPiece.piece = promotion;
+    const kingCheck = gameController.board.simulateMove(selectedPiece, newPosition, () => {
+      return isKingInCheck(selectedPiece.pieceColor, gameController.board.getKing(selectedPiece.pieceColor).position);
+    });
+    if (kingCheck) {
+      selectedPiece.piece = prevPiece;
+      return false;
+    }
+    return true;
+  }
+
+  private resetPromotion() {
+    gameController.cancelMove();
+    this.reset(true);
+  }
+
+  public waitForSelection(
+    cb: (s: string) => void,
+    verifyInfo: { piece: IPieceInfo, newPosition: number } = null, // REQUIRED FOR VERIFYING PROMOTION
+  ) {
     if (!this.onSelect) {
       this.onSelect = () => {
-        cb(this.promotionTarget());
-        this.reset();
+        const target = this.promotionTarget();
+        const legalPromotion = this.verifyPromotion(verifyInfo.piece, verifyInfo.newPosition, target);
+
+        if (!legalPromotion) return this.resetPromotion();
+
+        this.handleRookPromotion(verifyInfo.newPosition, target);
+
+        cb(target);
+        this.resetModal();
       }
+    }
+  }
+
+  public reset(promotionList = false) {
+    this.resetModal();
+    this.status = false;
+    if (promotionList) {
+      this.rookPromotions = [];
     }
   }
 
@@ -138,7 +190,7 @@ export class PromotionController {
     return piece;
   }
 
-  private reset() {
+  private resetModal() {
     this.hovered = { sx: null, sy: null, type: null };
     this.status = false;
     this.modal = { sx: null, sy: null, width: null, height: null }
@@ -146,7 +198,9 @@ export class PromotionController {
     draw();
   }
 
-  private canPromote({ piece, pieceColor, position }: IPieceInfo) {
+  private canPromote(selectedPiece: IPieceInfo) {
+
+    const { piece, pieceColor, position } = selectedPiece;
 
     if (
       !(piece.toLowerCase() === 'p')

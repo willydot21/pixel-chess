@@ -76,7 +76,9 @@ export class CastlingController {
     const { pieceColor, piece, position } = selectedPiece;
     const isInvolvedPiece = 'rRkK'.includes(piece);
 
-    if (!isInvolvedPiece) return null;
+    if (!isInvolvedPiece
+      || gameController.promotion.isPromotedRook(selectedPiece)
+    ) return null;
 
     const color = pieceColor === 'w' ? 'white' : 'black';
     const type = piece.toLowerCase() === 'k' ? 'King' : 'Rook';
@@ -191,13 +193,13 @@ export class CastlingController {
 
     const { piece } = selectedPiece;
 
-    console.log(this.piecesState);
-
     if (!this.isKing(piece)) return false;
 
     const targetSquare = gameController.board.getPieceAt(newPosition);
 
-    if (!this.isRook(targetSquare)) return false;
+    if (
+      !this.isRook(targetSquare)
+    ) return false;
 
     const moves = this.getCastlingMoves(selectedPiece);
 
@@ -233,4 +235,25 @@ export class CastlingController {
     this.piecesState[targetRook] = true;
   }
 
+
+  public reset() {
+    this.canCastle = {
+      white: {
+        left: false,
+        right: false
+      },
+      black: {
+        left: false,
+        right: false
+      }
+    };
+    this.piecesState = {
+      whiteKing: false,
+      blackKing: false,
+      whiteLeftRook: false,
+      whiteRightRook: false,
+      blackLeftRook: false,
+      blackRightRook: false
+    };
+  }
 }
