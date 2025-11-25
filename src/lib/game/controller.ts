@@ -140,6 +140,8 @@ export class GameController {
     const castlingMove = this.castling.checkCastlingMove(this.selectedPiece, newPosition);
     this.promotion.update(this.selectedPiece);
 
+    console.log('Promotion Status:', this.promotion.getStatus());
+
     if (this.promotion.getStatus()) {
       this.draggin = false;
       this.promotion.waitForSelection((target) => {
@@ -179,6 +181,9 @@ export class GameController {
 
   public cancelMove() {
     if (!this.selectedPiece) return;
+    if (this.promotion.getStatus()) {
+      this.promotion.reset();
+    }
     this.board.movePiece(this.selectedPiece.piece, this.selectedPiece.position);
     this.selectedPiece = null;
     this.legalMoves = [];

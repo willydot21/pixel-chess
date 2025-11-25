@@ -16,6 +16,7 @@ const mouseOnModal = ({
   sx, sy, width, height
 }: IPromotionModal) => {
 
+  if (sx === null || sy === null) return false;
   const { x, y } = mousePosition;
   const xInModal = (x > sx) && (x < (sx + width()));
   const yInModal = (y > sy) && (y < (sy + height()));
@@ -94,21 +95,17 @@ const select = (e: MouseEvent) => {
   e.preventDefault();
   e.stopPropagation();
 
-  if (
-    gameController.promotion.getStatus()
-    && mouseOnModal(gameController.promotion.getModal())
-  ) {
+  const inModal = mouseOnModal(gameController.promotion.getModal());
+
+  if (gameController.promotion.getStatus()) {
+
+    if (!inModal) return gameController.cancelMove();
+
     gameController.promotion.onSelect();
-  };
 
-  if (
-    !mouseOnBoard(mousePosition.x, mousePosition.y)
-    || !mouseOnModal(gameController.promotion.getModal())
-  ) {
-    return;
-  };
-
-  gameController.selectPiece(hoveredSquare);
+  } else {
+    gameController.selectPiece(hoveredSquare);
+  }
 }
 
 
