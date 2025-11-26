@@ -1,5 +1,5 @@
 
-import { draw, movePiece, gameController } from "../main";
+import { draw, movePiece, gameController, cursor } from "../main";
 import { applyOffset, aproximateValue, mouseOnBoard, updateConstants } from "./board/constants";
 import { canvas } from "./canvas";
 import type { IPromotionModal } from "./game/special moves/promotion";
@@ -77,6 +77,7 @@ const updateMousePosition = (e: MouseEvent) => {
 const updateHoveredSquare = (e: MouseEvent) => {
   const { x, y } = updateMousePosition(e);
   if (mouseOnBoard(x, y)) {
+    cursor.setCursor('default');
     const scaleOffset = -3.4;
     const rankVal = aproximateValue(x);
     const file = aproximateValue(y) - 1;

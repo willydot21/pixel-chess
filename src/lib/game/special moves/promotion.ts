@@ -107,7 +107,6 @@ export class PromotionController {
   }
 
   public isPromotedRook({ pieceColor, position }: IPieceInfo) {
-    console.log(this.rookPromotions);
     const target = this.rookPromotions.findIndex(({ color, position: pos }) => {
       return (color === pieceColor) && (pos === position);
     });

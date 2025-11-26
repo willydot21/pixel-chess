@@ -7,6 +7,7 @@ import { use } from "./lib/canvas.ts";
 import { hoveredSquare, mousePosition } from "./lib/mouse.ts";
 import { GameController } from "./lib/game/controller.ts";
 import { test } from "./lib/game/test.ts";
+import { ChessCursor } from "./lib/ui/cursor.ts";
 
 const { squareSize, boardSize, scale } = updateConstants();
 
@@ -82,6 +83,7 @@ const wPieces = new Sprite(sources.wP, 0, 0, 16, 32);
 const bPieces = new Sprite(sources.bP, 0, 0, 16, 32);
 export const square = new Sprite(sources.sOv, 0, 0, squareSize * 1.2, squareSize * 1.2);
 export const gameController = new GameController();
+export const cursor = new ChessCursor();
 
 export const drawLegalMoves = (legalMoves: number[]) => {
   const fixSquare = (squareSize / 2);

@@ -1,6 +1,6 @@
+import { play } from "../../audio";
 import { draw } from "../../main";
 import Board from "../board";
-import { context } from "../canvas";
 import { PieceByValue } from "../fen";
 import { type HoveredSquare } from "../mouse";
 import type { IPieceInfo } from "../types";
@@ -28,6 +28,11 @@ export class GameController {
   public castling = new CastlingController();
 
   constructor() {
+  }
+
+  private isCaptureMove(newPosition: number) {
+    const board = this.board.getBoard();
+    return board[newPosition] !== 0;
   }
 
   public getTurn() { return this.turn; }
@@ -95,6 +100,7 @@ export class GameController {
       updateStatusText(`${this.checkMate === 'b' ? "Black" : "White"} is in Checkmate!`);
     }
     else if (this.check) {
+      play.check(1);
       updateStatusText(`${this.check === 'w' ? "White" : "Black"} is in Check!`);
     } else {
       updateStatusText(``);
@@ -140,11 +146,10 @@ export class GameController {
     const castlingMove = this.castling.checkCastlingMove(this.selectedPiece, newPosition);
     this.promotion.update(this.selectedPiece);
 
-    console.log('Promotion Status:', this.promotion.getStatus());
-
     if (this.promotion.getStatus()) {
       this.draggin = false;
       this.promotion.waitForSelection((target) => {
+        play.promotion(1);
         this.board.popIndex(this.selectedPiece.position);
         this.board.movePiece(this.selectedPiece.piece, newPosition);
         this.selectedPiece = null;
@@ -156,6 +161,7 @@ export class GameController {
     }
 
     if (castlingMove && (this.selectedPiece.pieceColor === this.turn)) {
+      play.castle(1);
       this.castling.doCastling(this.selectedPiece, castlingMove);
       this.selectedPiece = null;
       this.draggin = false;
@@ -168,6 +174,10 @@ export class GameController {
       this.cancelMove();
 
     } else {
+
+      if (this.isCaptureMove(newPosition)) play.capture(1);
+      else play.move(1);
+
       this.board.popIndex(this.selectedPiece.position);
       this.board.movePiece(this.selectedPiece.piece, newPosition);
       this.castling.updateState(this.selectedPiece);
@@ -180,6 +190,7 @@ export class GameController {
   }
 
   public cancelMove() {
+    play.notify(1);
     if (!this.selectedPiece) return;
     if (this.promotion.getStatus()) {
       this.promotion.reset();
