@@ -117,6 +117,7 @@ export class GameController {
     this.board.popIndex(position);
     this.toggleDragging();
     this.legalMoves = this.getLegalMoves();
+    console.log(this.legalMoves);
 
     return piece;
   }
@@ -146,7 +147,7 @@ export class GameController {
     const castlingMove = this.castling.checkCastlingMove(this.selectedPiece, newPosition);
     this.promotion.update(this.selectedPiece);
 
-    if (this.promotion.getStatus()) {
+    if (this.promotion.getStatus() && this.legalMoves.includes(newPosition)) {
       this.draggin = false;
       this.promotion.waitForSelection((target) => {
         play.promotion(1);
@@ -195,6 +196,7 @@ export class GameController {
     if (this.promotion.getStatus()) {
       this.promotion.reset();
     }
+    this.draggin = false;
     this.board.movePiece(this.selectedPiece.piece, this.selectedPiece.position);
     this.selectedPiece = null;
     this.legalMoves = [];

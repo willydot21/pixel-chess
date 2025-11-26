@@ -1,7 +1,7 @@
 
 import { Sprite } from "./lib/sprite.ts";
 import { PieceByValue } from "./lib/fen.ts";
-import { getCoords, getUiPosition, isLowerCase } from "./lib/utilities.ts";
+import { getCoords, isLowerCase } from "./lib/utilities.ts";
 import { applyOffset, updateConstants, } from "./lib/board/constants.ts";
 import { use } from "./lib/canvas.ts";
 import { hoveredSquare, mousePosition } from "./lib/mouse.ts";

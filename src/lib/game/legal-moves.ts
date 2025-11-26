@@ -224,7 +224,7 @@ export const pawnLegalMoves = (pieceColor: PieceColor, index: number) => {
     isEmpty(single) && single,
     (isEmpty(double) && pawnFirstMove(index, pieceColor) && isEmpty(single)) && double,
     onPassantMove({ pawnPosition: index, pieceColor })
-  ].filter(Boolean);
+  ].filter(el => el !== false) as number[];
 
   return legalMoves;
 

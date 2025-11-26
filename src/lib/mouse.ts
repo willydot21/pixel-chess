@@ -3,7 +3,7 @@ import { draw, movePiece, gameController, cursor } from "../main";
 import { applyOffset, aproximateValue, mouseOnBoard, updateConstants } from "./board/constants";
 import { canvas } from "./canvas";
 import type { IPromotionModal } from "./game/special moves/promotion";
-import { ReverseRank } from "./utilities";
+import { normalizeUInd, Rank, ReverseRank } from "./utilities";
 
 export interface HoveredSquare { sx?: number, sy?: number, rank?: string, file?: number }
 
@@ -109,6 +109,12 @@ const select = (e: MouseEvent) => {
   }
 }
 
+const hoveringPiece = () => {
+  const { rank, file } = hoveredSquare;
+  const position = normalizeUInd({ rank: Rank[rank], file }) - 1;
+  const piece = gameController.getBoard()[position];
+  return piece;
+}
 
 const mouseMove = (e: MouseEvent) => {
   e.preventDefault();
@@ -120,8 +126,15 @@ const mouseMove = (e: MouseEvent) => {
   };
 
   updateHoveredSquare(e);
+
+  if (hoveringPiece()) {
+    cursor.setCursor('hover');
+  }
+
+
   if (gameController.draggin && gameController.selectedPiece) {
     movePiece(gameController.selectedPiece);
+    cursor.setCursor('grab');
   }
 }
 
@@ -134,6 +147,7 @@ canvas.addEventListener('mouseup', e => {
 
   if (gameController.selectedPiece && !gameController.promotion.getStatus()) {
     gameController.dropPiece(hoveredSquare);
+    cursor.setCursor('default');
     draw();
   }
 })
